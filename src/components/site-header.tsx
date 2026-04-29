@@ -67,14 +67,11 @@ export async function SiteHeader({
             <Link
               href="/intake"
               className={cn(
-                "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
+                "inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
                 linkBase,
               )}
             >
-              Gift
-              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
-                15% off
-              </span>
+              AI intake
             </Link>
           </nav>
         </div>

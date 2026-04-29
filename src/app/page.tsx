@@ -594,7 +594,7 @@ export default async function Home() {
                     ["How It Works", "/#how-it-works"],
                     ["Care Team", "/#how-it-works"],
                     ["Reviews", "/#how-it-works"],
-                    ["Gift", "/intake"],
+                    ["AI intake", "/intake"],
                   ],
                 },
                 {
