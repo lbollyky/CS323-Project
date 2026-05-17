@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "medicine — The one-stop shop for wellness",
+  title: "Your Protocol — Three short peptides. One protocol.",
   description:
-    "AI-built wellness protocols, reviewed by our care team and shipped monthly. Vitamins, performance, nootropics, sleep, longevity, hormones, weight loss, and skin & mood — all in one dashboard. From $69/mo.",
+    "An AI guide and a tight catalog of US-made, third-party-tested oral peptide capsules. epitalON, pinealON, Restore BPC, and the Dual-System Stack.",
 };
 
 export default function RootLayout({

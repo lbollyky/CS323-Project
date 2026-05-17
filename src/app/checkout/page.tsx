@@ -1,289 +1,233 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { Check, Clock, Loader2, Pill, Shield, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, Loader2, Minus, Plus, X } from "lucide-react";
+import { SiteNav } from "@/components/site-nav";
 import { useCartStore } from "@/stores/cart-store";
-import { cn } from "@/lib/utils";
-
-type CheckoutStep = "review" | "processing" | "complete";
+import { useMounted } from "@/lib/use-mounted";
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const { items, total, clearCart } = useCartStore();
-  const [step, setStep] = useState<CheckoutStep>("review");
-  const [rxApproved, setRxApproved] = useState(false);
+  return (
+    <Suspense fallback={<CheckoutShell />}>
+      <CheckoutInner />
+    </Suspense>
+  );
+}
 
-  const otcItems = items.filter((i) => i.product.type === "OTC");
-  const rxItems = items.filter((i) => i.product.type === "Rx");
-  const hasRx = rxItems.length > 0;
+function CheckoutShell() {
+  return (
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <SiteNav />
+      <main className="flex-1">
+        <div className="mx-auto max-w-xl px-5 pb-20 pt-12 sm:pt-16">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Checkout
+          </p>
+          <div className="mt-10 flex items-center gap-2 text-[13.5px] text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading cart…
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    if (step === "processing" && hasRx && !rxApproved) {
-      const timer = setTimeout(() => setRxApproved(true), 5000);
-      return () => clearTimeout(timer);
+function CheckoutInner() {
+  const mounted = useMounted();
+  const searchParams = useSearchParams();
+  const canceled = searchParams.get("canceled");
+
+  const items = useCartStore((s) => s.items);
+  const total = useCartStore((s) => s.total());
+  const setQuantity = useCartStore((s) => s.setQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
+
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function startCheckout() {
+    if (items.length === 0 || pending) return;
+    setError(null);
+    setPending(true);
+    try {
+      const res = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            id: i.product.id,
+            quantity: i.quantity,
+          })),
+        }),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        setError(data.error ?? "Could not start Stripe checkout.");
+        setPending(false);
+        return;
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not reach the server.",
+      );
+      setPending(false);
     }
-  }, [step, hasRx, rxApproved]);
-
-  function handlePlaceOrder() {
-    setStep("processing");
-    if (!hasRx) {
-      setTimeout(() => setStep("complete"), 1500);
-    }
-  }
-
-  function handleConfirm() {
-    setStep("complete");
-  }
-
-  function handleGoToDashboard() {
-    clearCart();
-    router.push("/dashboard");
-  }
-
-  if (items.length === 0 && step === "review") {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b bg-white/80 backdrop-blur-xl">
-          <div className="mx-auto flex h-16 max-w-6xl items-center px-4 sm:px-6">
-            <Link
-              href="/"
-              className="text-xl font-bold tracking-tight"
-            >
-              medicine<span className="text-primary">.com</span>
-            </Link>
-          </div>
-        </header>
-        <main className="flex flex-1 items-center justify-center px-4">
-          <Card className="w-full max-w-sm text-center">
-            <CardHeader>
-              <CardTitle>No items in your cart</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Complete the clinical intake to receive your personalized
-                protocol.
-              </p>
-            </CardContent>
-            <CardFooter className="justify-center">
-              <Link href="/intake">
-                <Button>
-                  Start Intake
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-        </main>
-      </div>
-    );
-  }
-
-  if (step === "complete") {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b bg-white/80 backdrop-blur-xl">
-          <div className="mx-auto flex h-16 max-w-6xl items-center px-4 sm:px-6">
-            <Link
-              href="/"
-              className="text-xl font-bold tracking-tight"
-            >
-              medicine<span className="text-primary">.com</span>
-            </Link>
-          </div>
-        </header>
-        <main className="flex flex-1 items-center justify-center px-4">
-          <div className="w-full max-w-sm text-center">
-            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-              <Check className="h-7 w-7" strokeWidth={2.5} />
-            </div>
-            <h1 className="text-2xl font-semibold">Order confirmed</h1>
-            <p className="mt-2 text-muted-foreground">
-              Your protocol is active. Head to your dashboard to begin daily
-              tracking and receive personalized insights.
-            </p>
-            <Button onClick={handleGoToDashboard} size="lg" className="mt-8">
-              Go to Dashboard
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </main>
-      </div>
-    );
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center px-4 sm:px-6">
-          <Link href="/" className="text-xl font-bold tracking-tight">
-            medicine<span className="text-primary">.com</span>
-          </Link>
-        </div>
-      </header>
-
-      <main className="flex-1 py-10">
-        <div className="mx-auto max-w-xl px-4 sm:px-6">
-          <h1 className="text-2xl font-semibold">Review your protocol</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Confirm the items below to activate your personalized stack.
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <SiteNav />
+      <main className="flex-1">
+        <div className="mx-auto max-w-xl px-5 pb-20 pt-12 sm:pt-16">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Checkout
           </p>
+          <h1 className="mt-3 text-[28px] font-medium tracking-tight">
+            Review your protocol
+          </h1>
 
-          {/* OTC */}
-          {otcItems.length > 0 && (
-            <Card className="mt-8">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Pill className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-                    OTC Supplements
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="divide-y">
-                  {otcItems.map(({ product }) => (
-                    <li
-                      key={product.id}
-                      className="flex items-start justify-between py-3 first:pt-0 last:pb-0"
-                    >
-                      <div className="min-w-0 flex-1 pr-4">
-                        <p className="text-sm font-medium">{product.name}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                          {product.description}
-                        </p>
-                      </div>
-                      <p className="text-sm font-semibold tabular-nums whitespace-nowrap">
-                        ${product.price.toFixed(2)}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+          {canceled && (
+            <div className="mt-5 rounded-xl border border-amber-300/60 bg-amber-50/50 px-4 py-3 text-[13px] text-amber-900">
+              Payment canceled. Your cart is still here when you&rsquo;re ready.
+            </div>
           )}
 
-          {/* Rx */}
-          {rxItems.length > 0 && (
-            <Card className="mt-4">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-amber-600" />
-                  <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-                    Prescription Items
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="divide-y">
-                  {rxItems.map(({ product }) => (
-                    <li
-                      key={product.id}
-                      className="flex items-start justify-between py-3 first:pt-0 last:pb-0"
-                    >
-                      <div className="min-w-0 flex-1 pr-4">
-                        <p className="text-sm font-medium">{product.name}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                          {product.description}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold tabular-nums whitespace-nowrap">
-                          ${product.price.toFixed(2)}
-                        </p>
-                        {step === "processing" && (
-                          <p
-                            className={cn(
-                              "mt-1 flex items-center justify-end gap-1 text-xs font-medium",
-                              rxApproved
-                                ? "text-emerald-600"
-                                : "text-amber-600",
-                            )}
-                          >
-                            {rxApproved ? (
-                              <>
-                                <Check className="h-3 w-3" /> Approved
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-3 w-3 animate-pulse" />{" "}
-                                Pending approval
-                              </>
-                            )}
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                {step === "review" && (
-                  <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-                    <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                    <p className="text-xs leading-relaxed text-amber-800">
-                      Prescription items require physician review before
-                      dispensing. Approval is typically completed within moments.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Total */}
-          <div className="mt-6 flex items-center justify-between rounded-xl border bg-card px-5 py-4">
-            <p className="text-sm font-medium text-muted-foreground">
-              Monthly total
-            </p>
-            <p className="text-xl font-semibold tabular-nums">
-              ${total().toFixed(2)}
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="mt-6">
-            {step === "review" && (
-              <Button
-                onClick={handlePlaceOrder}
-                className="w-full"
-                size="lg"
-              >
-                Place Order
-              </Button>
-            )}
-            {step === "processing" && (
-              <>
-                {hasRx && !rxApproved ? (
-                  <Button disabled className="w-full" size="lg">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Awaiting physician approval…
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleConfirm}
-                    className="w-full"
-                    size="lg"
+          {!mounted ? (
+            <div className="mt-10 flex items-center gap-2 text-[13.5px] text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading cart…
+            </div>
+          ) : items.length === 0 ? (
+            <EmptyCart />
+          ) : (
+            <>
+              <ul className="mt-8 divide-y divide-border/60 rounded-2xl border border-border bg-background">
+                {items.map(({ product, quantity }) => (
+                  <li
+                    key={product.id}
+                    className="flex items-start gap-4 px-5 py-4"
                   >
-                    Confirm Order
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="truncate text-[14.5px] font-medium">
+                          {product.name}
+                        </p>
+                        <p className="shrink-0 text-[14px] font-medium tabular-nums">
+                          ${(product.price * quantity).toFixed(0)}
+                        </p>
+                      </div>
+                      <p className="mt-0.5 text-[12px] text-muted-foreground">
+                        {product.active}
+                      </p>
 
-          <p className="mt-4 text-center text-xs text-muted-foreground/60">
-            This is a prototype demo. No payment will be processed.
-          </p>
+                      <div className="mt-3 flex items-center gap-4">
+                        <div className="inline-flex items-center rounded-full border border-border text-[12.5px]">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setQuantity(product.id, quantity - 1)
+                            }
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-l-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-6 text-center tabular-nums">
+                            {quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setQuantity(product.id, quantity + 1)
+                            }
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-r-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(product.id)}
+                          className="inline-flex items-center gap-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <X className="h-3 w-3" /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-5">
+                <span className="text-[13px] text-muted-foreground">Total</span>
+                <span className="text-[20px] font-medium tabular-nums">
+                  ${total.toFixed(0)}
+                </span>
+              </div>
+
+              {error && (
+                <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-[13px] text-destructive">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={startCheckout}
+                disabled={pending}
+                className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-foreground text-[14px] font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {pending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Redirecting to
+                    Stripe…
+                  </>
+                ) : (
+                  <>
+                    Pay securely with Stripe
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+
+              <p className="mt-3 text-center text-[11.5px] leading-relaxed text-muted-foreground">
+                You&rsquo;ll be redirected to Stripe&rsquo;s secure checkout.
+                Use test card{" "}
+                <span className="font-mono">4242 4242 4242 4242</span>, any
+                future date, any CVC, any ZIP.
+              </p>
+            </>
+          )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function EmptyCart() {
+  return (
+    <div className="mt-10 rounded-2xl border border-border bg-background px-6 py-10 text-center">
+      <h2 className="text-[16px] font-medium">Your cart is empty.</h2>
+      <p className="mx-auto mt-2 max-w-sm text-[13.5px] text-muted-foreground">
+        Talk to the protocol guide, or browse the catalog directly.
+      </p>
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <Link
+          href="/"
+          className="inline-flex h-10 items-center justify-center rounded-xl bg-foreground px-5 text-[13.5px] font-medium text-background transition-opacity hover:opacity-90"
+        >
+          Talk to the guide
+        </Link>
+        <Link
+          href="/shop"
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-border px-5 text-[13.5px] text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+        >
+          Shop directly
+        </Link>
+      </div>
     </div>
   );
 }

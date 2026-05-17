@@ -189,6 +189,36 @@
   animation: blink 1.05s step-end infinite;
 }
 
+/* Peptide chain motif — extremely slow horizontal drift + node breath. */
+@keyframes peptide-drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-6px, 4px); }
+}
+.animate-peptide-drift {
+  animation: peptide-drift 22s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes peptide-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.45; }
+  50% { transform: scale(1.6); opacity: 0; }
+}
+.animate-peptide-pulse {
+  animation: peptide-pulse 4.5s ease-in-out infinite;
+  transform-origin: 160px 92px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-peptide-drift,
+  .animate-peptide-pulse,
+  .animate-marquee,
+  .animate-pulse-ring,
+  .animate-shimmer,
+  .animate-orbit,
+  .animate-float-slow {
+    animation: none !important;
+  }
+}
+
 /* ─── Effects ─────────────────────────────────────────────── */
 
 .bg-grid-faint {

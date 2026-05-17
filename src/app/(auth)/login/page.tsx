@@ -3,21 +3,12 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={null}>
       <LoginForm />
     </Suspense>
   );
@@ -30,94 +21,113 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const redirect = searchParams.get("redirect") || "/";
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      router.push(redirect);
+      router.refresh();
+    } catch {
+      setError(
+        "Auth backend isn't configured for this demo. The shop and AI guide are open — head back home.",
+      );
       setLoading(false);
-      return;
     }
-
-    router.push(redirect);
-    router.refresh();
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-5 py-16 text-foreground">
       <Link
         href="/"
-        className="mb-8 text-xl font-semibold tracking-tight text-foreground"
+        className="absolute left-5 top-5 inline-flex items-center gap-1 text-[12.5px] text-muted-foreground transition-colors hover:text-foreground sm:left-8 sm:top-8"
       >
-        medicine<span className="text-primary">.com</span>
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
       </Link>
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to access your dashboard
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
-                {error}
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+
+      <div className="w-full max-w-sm">
+        <Link
+          href="/"
+          className="flex items-baseline gap-1 text-[15px] font-medium tracking-tight"
+        >
+          <span>your</span>
+          <span className="text-muted-foreground">protocol</span>
+          <span className="ml-0.5 inline-block h-1 w-1 translate-y-[-2px] rounded-full bg-foreground" />
+        </Link>
+
+        <h1 className="mt-10 text-[24px] font-medium tracking-tight">
+          Sign in
+        </h1>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">
+          Members only. New here? You can skip this and{" "}
+          <Link href="/shop" className="text-foreground underline-offset-4 hover:underline">
+            shop directly
+          </Link>{" "}
+          or{" "}
+          <Link href="/" className="text-foreground underline-offset-4 hover:underline">
+            talk to the guide
+          </Link>
+          .
+        </p>
+
+        <form onSubmit={handleLogin} className="mt-8 flex flex-col gap-3">
+          {error && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-[12.5px] text-destructive">
+              {error}
             </div>
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              New here?{" "}
-              <Link
-                href="/signup"
-                className="font-medium text-primary hover:underline"
-              >
-                Create an account
-              </Link>
-            </p>
-          </CardFooter>
+          )}
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground">
+              Email
+            </span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="h-10 rounded-lg border border-border bg-background px-3 text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-foreground/50 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground">
+              Password
+            </span>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="h-10 rounded-lg border border-border bg-background px-3 text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-foreground/50 focus:outline-none"
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-3 inline-flex h-10 items-center justify-center rounded-lg bg-foreground text-[13.5px] font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {loading ? "Signing in…" : "Sign in"}
+          </button>
         </form>
-      </Card>
+      </div>
     </main>
   );
 }
