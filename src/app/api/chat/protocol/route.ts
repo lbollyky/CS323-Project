@@ -10,7 +10,7 @@ function buildCatalog(): string {
 }
 
 function buildSystemPrompt(): string {
-  return `You are the on-site protocol guide for Your Protocol, a US-made short-peptide supplement company.
+  return `You are the on-site protocol guide for Pepwell, a US-made short-peptide supplement company.
 
 The full product line is exactly four SKUs (no others exist; never invent one):
 ${buildCatalog()}

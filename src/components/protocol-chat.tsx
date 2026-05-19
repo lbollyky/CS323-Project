@@ -93,7 +93,7 @@ export function ProtocolChat() {
           {!hasConversation && (
             <div className="flex flex-col items-center text-center">
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                Your Protocol · AI guide
+                Pepwell · AI guide
               </p>
               <h1 className="mt-5 text-balance text-[34px] font-medium leading-[1.1] tracking-tight text-foreground sm:text-[42px]">
                 What&rsquo;s the thing your body

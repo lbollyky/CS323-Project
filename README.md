@@ -1,4 +1,4 @@
-# Your Protocol
+# Pepwell
 
 A minimalist, AI-guided storefront for a tight peptide-supplement line —
 epitalON, pinealON, Restore BPC, and the Dual-System Stack. Built with

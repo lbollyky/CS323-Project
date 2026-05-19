@@ -64,10 +64,10 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="flex items-baseline gap-1 text-[15px] font-medium tracking-tight"
+          className="flex items-baseline gap-0.5 text-[15px] font-medium tracking-tight"
         >
-          <span>your</span>
-          <span className="text-muted-foreground">protocol</span>
+          <span>pep</span>
+          <span className="text-muted-foreground">well</span>
           <span className="ml-0.5 inline-block h-1 w-1 translate-y-[-2px] rounded-full bg-foreground" />
         </Link>
 

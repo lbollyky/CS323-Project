@@ -5,7 +5,7 @@ import { SiteNav } from "@/components/site-nav";
 import { ShopAddToCartButton } from "@/components/shop-add-to-cart-button";
 
 export const metadata = {
-  title: "Shop — Your Protocol",
+  title: "Shop — Pepwell",
   description:
     "Three short peptides. One protocol. Made in the USA, third-party tested, oral capsules. Browse the full catalog.",
 };

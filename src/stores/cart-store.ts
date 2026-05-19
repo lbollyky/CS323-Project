@@ -73,7 +73,7 @@ export const useCartStore = create<CartState>()(
         ),
     }),
     {
-      name: "your-protocol-cart",
+      name: "pepwell-cart",
       storage: createJSONStorage(() => localStorage),
     },
   ),

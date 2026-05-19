@@ -13,10 +13,10 @@ export function SiteNav() {
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
         <Link
           href="/"
-          className="flex items-baseline gap-1 text-[15px] font-medium tracking-tight text-foreground"
+          className="flex items-baseline gap-0.5 text-[15px] font-medium tracking-tight text-foreground"
         >
-          <span>your</span>
-          <span className="text-muted-foreground">protocol</span>
+          <span>pep</span>
+          <span className="text-muted-foreground">well</span>
           <span className="ml-0.5 inline-block h-1 w-1 translate-y-[-2px] rounded-full bg-foreground" />
         </Link>
 

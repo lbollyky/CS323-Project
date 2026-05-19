@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Your Protocol — Three short peptides. One protocol.",
+  title: "Pepwell — Three short peptides. One protocol.",
   description:
     "An AI guide and a tight catalog of US-made, third-party-tested oral peptide capsules. epitalON, pinealON, Restore BPC, and the Dual-System Stack.",
 };
