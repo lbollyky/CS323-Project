@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { PRODUCTS } from "@/lib/products";
 import { SiteNav } from "@/components/site-nav";
 import { ShopAddToCartButton } from "@/components/shop-add-to-cart-button";
+import { getUser } from "@/lib/auth";
 
 export const metadata = {
   title: "Shop — Pepwell",
@@ -10,13 +11,14 @@ export const metadata = {
     "Three short peptides. One protocol. Made in the USA, third-party tested, oral capsules. Browse the full catalog.",
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const user = await getUser();
   const single = PRODUCTS.filter((p) => !p.bundle_of);
   const stack = PRODUCTS.find((p) => p.bundle_of);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <SiteNav />
+      <SiteNav user={user} />
       <main className="flex-1">
         <section className="mx-auto max-w-5xl px-5 pb-20 pt-14 sm:pt-20">
           <div className="max-w-2xl">

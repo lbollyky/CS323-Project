@@ -21,7 +21,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = searchParams.get("redirect") || "/track";
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -75,15 +75,14 @@ function LoginForm() {
           Sign in
         </h1>
         <p className="mt-1 text-[13.5px] text-muted-foreground">
-          Members only. New here? You can skip this and{" "}
-          <Link href="/shop" className="text-foreground underline-offset-4 hover:underline">
-            shop directly
+          Drops you into your tracker.{" "}
+          <Link
+            href={`/signup?redirect=${encodeURIComponent(redirect)}`}
+            className="text-foreground underline-offset-4 hover:underline"
+          >
+            Create an account
           </Link>{" "}
-          or{" "}
-          <Link href="/" className="text-foreground underline-offset-4 hover:underline">
-            talk to the guide
-          </Link>
-          .
+          if you&rsquo;re new.
         </p>
 
         <form onSubmit={handleLogin} className="mt-8 flex flex-col gap-3">

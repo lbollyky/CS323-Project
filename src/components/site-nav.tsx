@@ -1,12 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { useCartStore } from "@/stores/cart-store";
-import { useMounted } from "@/lib/use-mounted";
+import type { User } from "@supabase/supabase-js";
+import { CartBadge } from "@/components/cart-badge";
+import { SignOutForm } from "@/components/sign-out-form";
 
-export function SiteNav() {
-  const mounted = useMounted();
-  const count = useCartStore((s) => s.count());
+export function SiteNav({ user }: { user?: User | null }) {
+  const isAuthed = Boolean(user);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -25,22 +23,36 @@ export function SiteNav() {
             href="/shop"
             className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
           >
-            Shop directly
+            Shop
           </Link>
-          <Link
-            href="/login"
-            className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Login
-          </Link>
-          {mounted && count > 0 && (
-            <Link
-              href="/checkout"
-              className="ml-1 inline-flex h-8 items-center gap-1.5 rounded-full bg-foreground px-3 text-[12.5px] font-medium text-background transition-opacity hover:opacity-90"
-            >
-              Cart
-              <span className="tabular-nums opacity-70">{count}</span>
-            </Link>
+
+          {isAuthed ? (
+            <>
+              <Link
+                href="/track"
+                className="rounded-full px-3 py-1.5 text-foreground transition-colors hover:text-foreground"
+              >
+                Track
+              </Link>
+              <CartBadge />
+              <SignOutForm />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="ml-1 inline-flex h-8 items-center rounded-full bg-foreground px-3 text-[12.5px] font-medium text-background transition-opacity hover:opacity-90"
+              >
+                Sign up
+              </Link>
+              <CartBadge />
+            </>
           )}
         </nav>
       </div>

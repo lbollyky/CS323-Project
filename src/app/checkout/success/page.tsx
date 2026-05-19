@@ -3,6 +3,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { ClearCartOnMount } from "@/components/clear-cart-on-mount";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { getUser } from "@/lib/auth";
 
 interface OrderSummary {
   email?: string | null;
@@ -40,11 +41,14 @@ export default async function CheckoutSuccessPage({
   searchParams: Promise<{ session_id?: string }>;
 }) {
   const { session_id } = await searchParams;
-  const order = session_id ? await loadOrder(session_id) : null;
+  const [order, user] = await Promise.all([
+    session_id ? loadOrder(session_id) : Promise.resolve(null),
+    getUser(),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <SiteNav />
+      <SiteNav user={user} />
       <ClearCartOnMount />
       <main className="flex flex-1 flex-col items-center px-5 pb-20 pt-16 sm:pt-24">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
