@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { PRIMARY_CLINICIAN } from "@/lib/clinician";
 import { cn } from "@/lib/utils";
@@ -75,13 +76,13 @@ export function ClinicianCard({
                 {c.credentials} · {c.years_in_practice} yrs · {c.location}
               </p>
             </div>
-            <a
-              href="#"
+            <Link
+              href="/clinician"
               className="hidden shrink-0 items-center gap-0.5 text-[12px] text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
             >
               Read reasoning
               <ArrowUpRight className="h-3 w-3" />
-            </a>
+            </Link>
           </div>
           <p className="mt-3 text-[13.5px] leading-relaxed text-foreground/85">
             &ldquo;{c.philosophy}&rdquo;
