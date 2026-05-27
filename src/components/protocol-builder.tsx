@@ -8,8 +8,11 @@ import {
   TrendingUp,
   ArrowRight,
 } from "lucide-react";
-import { ProductIllustration } from "@/components/product-illustration";
+import { CapsuleIllustration } from "@/components/capsule-illustration";
 import { ClinicianCard } from "@/components/clinician-card";
+import { PeptideMechanism } from "@/components/peptide-mechanism";
+import { ProtocolTimeline } from "@/components/protocol-timeline";
+import { categoryForProduct, getPalette } from "@/lib/category-palette";
 import type { ProtocolProduct } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
@@ -89,34 +92,48 @@ export function ProtocolBuilder({
             <DosingSchedule products={products} />
           </section>
 
+          <PeptideMechanism productId={products[0].id} compact />
+
+          <ProtocolTimeline
+            productId={products[0].id}
+            category={categoryForProduct(products[0].id)}
+          />
+
           <section className="rounded-2xl border border-border bg-background p-4">
             <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
               In the box
             </p>
             <ul className="mt-3 space-y-3">
-              {products.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex items-center gap-3"
-                >
-                  <ProductIllustration
-                    id={p.id}
-                    className="h-12 w-12 rounded-lg"
-                    showLabel={false}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13.5px] font-medium text-foreground">
-                      {p.name}
-                    </p>
-                    <p className="truncate text-[11.5px] text-muted-foreground">
-                      {p.active}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-[13px] font-medium tabular-nums">
-                    ${p.price}
-                  </span>
-                </li>
-              ))}
+              {products.map((p) => {
+                const palette = getPalette(categoryForProduct(p.id));
+                return (
+                  <li
+                    key={p.id}
+                    className="flex items-center gap-3 overflow-hidden rounded-xl border border-border/60 p-2"
+                    style={{
+                      background: `linear-gradient(135deg, ${palette.bgFrom}, ${palette.bgTo})`,
+                    }}
+                  >
+                    <CapsuleIllustration
+                      palette={palette}
+                      floating={false}
+                      className="h-14 w-14 shrink-0"
+                      tilt={-18}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13.5px] font-medium text-foreground">
+                        {p.name}
+                      </p>
+                      <p className="truncate text-[11.5px] text-foreground/65">
+                        {p.active}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[13px] font-medium tabular-nums">
+                      ${p.price}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">

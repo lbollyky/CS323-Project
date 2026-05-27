@@ -15,7 +15,7 @@ import {
 import { ClinicianCard } from "@/components/clinician-card";
 import { TestimonialStrip } from "@/components/testimonial-strip";
 import { ProtocolPreview } from "@/components/protocol-preview";
-import { QuickReplyChip, CHIP_ORDER } from "@/components/quick-reply-chip";
+import { GoalTileGrid } from "@/components/goal-tile";
 
 const ALLOWED_IDS = new Set(PRODUCTS.map((p) => p.id));
 
@@ -269,21 +269,17 @@ function LandingState({
   isLoading: boolean;
 }) {
   return (
-    <div className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-5">
+    <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-5">
       {/* Centered hero + composer */}
-      <div className="flex w-full flex-1 flex-col items-center justify-center py-16 sm:py-24">
-        <h1 className="text-balance text-center text-[36px] font-medium leading-[1.05] tracking-tight text-foreground sm:text-[48px]">
+      <div className="flex w-full flex-1 flex-col items-center justify-center py-14 sm:py-20">
+        <h1 className="text-balance text-center text-[36px] font-medium leading-[1.04] tracking-tight text-foreground sm:text-[52px]">
           What version of yourself are you
           <br className="hidden sm:block" /> working toward?
         </h1>
-        <p className="mt-4 max-w-md text-center text-[14.5px] leading-relaxed text-muted-foreground">
-          Talk to Dr. Levin&rsquo;s AI guide. She&rsquo;ll route you to the
-          smallest peptide protocol that fits, or to none at all.
-        </p>
 
         <form
           onSubmit={onSubmit}
-          className="group relative mt-8 flex w-full max-w-2xl items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_24px_60px_-20px_oklch(0.55_0.22_260/_0.25)] transition-colors focus-within:border-foreground/50"
+          className="group relative mt-10 flex w-full max-w-2xl items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_24px_60px_-20px_oklch(0.55_0.22_260/_0.22)] transition-colors focus-within:border-foreground/50"
         >
           <textarea
             ref={inputRef}
@@ -310,13 +306,15 @@ function LandingState({
           </button>
         </form>
 
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
-          {CHIP_ORDER.map((c) => (
-            <QuickReplyChip key={c} chip={c} onClick={onChip} />
-          ))}
+        {/* Goal tiles — primary on-ramp, in place of small chips */}
+        <div className="mt-8 w-full">
+          <p className="mb-3 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+            Jump in by goal
+          </p>
+          <GoalTileGrid onSelect={onChip} />
         </div>
 
-        <p className="mt-5 text-center text-[11px] text-muted-foreground">
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">
           Educational only. Not medical advice. These statements have not
           been evaluated by the FDA.
         </p>

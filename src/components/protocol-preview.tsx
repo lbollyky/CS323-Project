@@ -1,5 +1,6 @@
 import { Check, Sparkles } from "lucide-react";
-import { ProductIllustration } from "@/components/product-illustration";
+import { CapsuleIllustration } from "@/components/capsule-illustration";
+import { categoryForProduct, getPalette } from "@/lib/category-palette";
 import { cn } from "@/lib/utils";
 
 /**
@@ -36,36 +37,19 @@ export function ProtocolPreview({
             </span>
           </header>
 
-          <div className="mt-4 grid grid-cols-[64px_1fr_auto] items-center gap-3">
-            <ProductIllustration
+          <div className="mt-4 space-y-2">
+            <PreviewRow
               id="epitalon"
-              className="rounded-lg"
-              showLabel={false}
+              name="epitalON · 1 capsule, evening"
+              caption="AEDG · circadian recalibration"
+              price={149}
             />
-            <div>
-              <p className="text-[13.5px] font-medium text-foreground">
-                epitalON · 1 capsule, evening
-              </p>
-              <p className="text-[12px] text-muted-foreground">
-                AEDG · circadian recalibration
-              </p>
-            </div>
-            <span className="text-[13px] font-medium tabular-nums">$149</span>
-
-            <ProductIllustration
+            <PreviewRow
               id="pinealon"
-              className="rounded-lg"
-              showLabel={false}
+              name="pinealON · 2 capsules, morning"
+              caption="EDR · daytime cognitive support"
+              price={149}
             />
-            <div>
-              <p className="text-[13.5px] font-medium text-foreground">
-                pinealON · 2 capsules, morning
-              </p>
-              <p className="text-[12px] text-muted-foreground">
-                EDR · daytime cognitive support
-              </p>
-            </div>
-            <span className="text-[13px] font-medium tabular-nums">$149</span>
           </div>
 
           <div className="mt-4 space-y-1.5 border-t border-border/60 pt-3 text-[12px] text-muted-foreground">
@@ -88,6 +72,44 @@ export function ProtocolPreview({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PreviewRow({
+  id,
+  name,
+  caption,
+  price,
+}: {
+  id: string;
+  name: string;
+  caption: string;
+  price: number;
+}) {
+  const palette = getPalette(categoryForProduct(id));
+  return (
+    <div
+      className="flex items-center gap-3 overflow-hidden rounded-xl border border-border/60 p-2"
+      style={{
+        background: `linear-gradient(135deg, ${palette.bgFrom}, ${palette.bgTo})`,
+      }}
+    >
+      <CapsuleIllustration
+        palette={palette}
+        floating={false}
+        className="h-12 w-12 shrink-0"
+        tilt={-18}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13.5px] font-medium text-foreground">
+          {name}
+        </p>
+        <p className="truncate text-[11.5px] text-foreground/65">{caption}</p>
+      </div>
+      <span className="shrink-0 text-[13px] font-medium tabular-nums">
+        ${price}
+      </span>
     </div>
   );
 }

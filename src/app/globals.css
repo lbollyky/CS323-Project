@@ -46,8 +46,10 @@
 :root {
   --radius: 0.875rem;
 
-  /* Light surface palette — clean, generous whitespace like derive */
-  --background: oklch(1 0 0);
+  /* Light surface palette — slightly warm cream so colored category
+     tiles read as part of an intentional palette, not as pop-up cards
+     against bright white. */
+  --background: oklch(0.995 0.004 90);
   --foreground: oklch(0.16 0.015 250);
   --ink: oklch(0.13 0.02 250);
   --surface: oklch(0.985 0.003 250);
@@ -207,6 +209,12 @@
   transform-origin: 160px 92px;
 }
 
+/* Mechanism diagram: each amino-acid node breathes gently. */
+@keyframes peptide-node-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-peptide-drift,
   .animate-peptide-pulse,
@@ -214,7 +222,8 @@
   .animate-pulse-ring,
   .animate-shimmer,
   .animate-orbit,
-  .animate-float-slow {
+  .animate-float-slow,
+  [style*="peptide-node-breathe"] {
     animation: none !important;
   }
 }
