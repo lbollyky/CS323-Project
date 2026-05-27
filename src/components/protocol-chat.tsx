@@ -2,44 +2,61 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUp, Plus, Check } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { PRODUCTS, getProduct, type ProtocolProduct } from "@/lib/products";
 import { useCartStore } from "@/stores/cart-store";
 import { cn } from "@/lib/utils";
-
-const SUGGESTIONS = [
-  "I can't sleep through the night.",
-  "Brain fog has gotten bad.",
-  "I want to age slower — what should I start with?",
-  "Recovering from surgery. What helps?",
-];
+import {
+  ProtocolBuilder,
+  type ProtocolMeta,
+} from "@/components/protocol-builder";
+import { ClinicianCard } from "@/components/clinician-card";
+import { TestimonialStrip } from "@/components/testimonial-strip";
+import { ProtocolPreview } from "@/components/protocol-preview";
+import { QuickReplyChip, CHIP_ORDER } from "@/components/quick-reply-chip";
 
 const ALLOWED_IDS = new Set(PRODUCTS.map((p) => p.id));
 
-function extractRecommendation(text: string): {
+interface ParsedRecommendation {
   body: string;
   ids: string[];
-} {
+  meta: ProtocolMeta;
+}
+
+/**
+ * Pulls the structured `protocol` JSON block out of the assistant message
+ * and returns the cleaned prose plus the parsed metadata. Tolerant of
+ * partial blocks while the response is still streaming.
+ */
+function extractRecommendation(text: string): ParsedRecommendation {
   const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
   let ids: string[] = [];
+  const meta: ProtocolMeta = {};
   let body = text;
 
   if (jsonMatch) {
     try {
       const parsed = JSON.parse(jsonMatch[1]);
-      const raw = parsed.recommended_product_ids ?? parsed.recommended_products ?? [];
+      const raw =
+        parsed.recommended_product_ids ?? parsed.recommended_products ?? [];
       ids = (Array.isArray(raw) ? raw : [])
         .map((id: unknown) => String(id).toLowerCase().trim())
         .filter((id: string) => ALLOWED_IDS.has(id));
+      if (typeof parsed.goal === "string") meta.goal = parsed.goal;
+      if (typeof parsed.duration_weeks === "number")
+        meta.duration_weeks = parsed.duration_weeks;
+      if (typeof parsed.cohort === "string") meta.cohort = parsed.cohort;
+      if (typeof parsed.cohort_outcome === "string")
+        meta.cohort_outcome = parsed.cohort_outcome;
     } catch {
-      /* ignore */
+      /* ignore — likely mid-stream */
     }
     body = text.replace(/```json[\s\S]*?```/g, "").trim();
   }
 
-  return { body, ids };
+  return { body, ids, meta };
 }
 
 export function ProtocolChat() {
@@ -55,6 +72,31 @@ export function ProtocolChat() {
 
   const isLoading = status === "submitted" || status === "streaming";
   const hasConversation = messages.length > 0;
+
+  // Latest assistant recommendation drives the live ProtocolBuilder panel.
+  const latestProtocol = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role !== "assistant") continue;
+      const raw =
+        m.parts
+          ?.filter(
+            (p): p is { type: "text"; text: string } => p.type === "text",
+          )
+          .map((p) => p.text)
+          .join("") ?? "";
+      const parsed = extractRecommendation(raw);
+      if (parsed.ids.length > 0) return parsed;
+    }
+    return null;
+  }, [messages]);
+
+  const protocolProducts = useMemo<ProtocolProduct[]>(() => {
+    if (!latestProtocol) return [];
+    return latestProtocol.ids
+      .map((id) => getProduct(id))
+      .filter((p): p is ProtocolProduct => Boolean(p));
+  }, [latestProtocol]);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -77,34 +119,44 @@ export function ProtocolChat() {
     submit();
   }
 
-  function startCheckout(products: ProtocolProduct[]) {
-    setItems(products);
+  function startCheckout() {
+    setItems(protocolProducts);
     router.push("/checkout");
   }
 
+  // ──────────────────────────────────────────────────────────────
+  // Landing state (no messages yet): centered composer, hero copy
+  // pared back, trust block + protocol preview below the fold.
+  // ──────────────────────────────────────────────────────────────
+  if (!hasConversation) {
+    return (
+      <LandingState
+        draft={draft}
+        setDraft={setDraft}
+        inputRef={inputRef}
+        onSubmit={handleSubmit}
+        onChip={(prompt) => submit(prompt)}
+        onUseExample={() =>
+          submit("I want better sleep and sharper focus over the next 8 weeks.")
+        }
+        isLoading={isLoading}
+      />
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Conversation state: split layout. Chat on the left, live
+  // protocol builder on the right. Composer docked at the bottom.
+  // ──────────────────────────────────────────────────────────────
   return (
     <div className="relative flex flex-1 flex-col">
-      {/* ───── Conversation column ───── */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto"
-      >
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 pb-48 pt-12 sm:pt-20">
-          {!hasConversation && (
-            <div className="flex flex-col items-center text-center">
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                Pepwell · your AI protocol
-              </p>
-              <h1 className="mt-5 text-balance text-[34px] font-medium leading-[1.1] tracking-tight text-foreground sm:text-[42px]">
-                What&rsquo;s the thing your body
-                <br className="hidden sm:block" /> wishes it wasn&rsquo;t doing?
-              </h1>
-              <p className="mt-4 max-w-md text-[14.5px] leading-relaxed text-muted-foreground">
-                Three short-chain peptides, one protocol. Tell me what&rsquo;s
-                actually going on. I&rsquo;ll route you to the right one.
-              </p>
-            </div>
-          )}
+      <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 gap-6 px-5 pb-44 pt-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+        {/* Conversation column */}
+        <div
+          ref={scrollRef}
+          className="flex flex-col gap-6 overflow-y-auto"
+        >
+          <ClinicianCard variant="inline" />
 
           {messages.map((message) => {
             const isAssistant = message.role === "assistant";
@@ -117,10 +169,7 @@ export function ProtocolChat() {
                 .join("") ?? "";
             if (!raw && !isLoading) return null;
 
-            const { body, ids } = extractRecommendation(raw);
-            const products = ids
-              .map((id) => getProduct(id))
-              .filter((p): p is ProtocolProduct => Boolean(p));
+            const { body } = extractRecommendation(raw);
 
             return (
               <div
@@ -147,13 +196,6 @@ export function ProtocolChat() {
                     </p>
                   ))}
                 </div>
-
-                {products.length > 0 && (
-                  <RecommendationCard
-                    products={products}
-                    onCheckout={() => startCheckout(products)}
-                  />
-                )}
               </div>
             );
           })}
@@ -167,123 +209,193 @@ export function ProtocolChat() {
               </div>
             )}
         </div>
+
+        {/* Live protocol panel */}
+        <div className="hidden lg:block">
+          <div className="sticky top-20">
+            <ProtocolBuilder
+              products={protocolProducts}
+              meta={latestProtocol?.meta ?? {}}
+              isStreaming={isLoading}
+              onCheckout={startCheckout}
+            />
+          </div>
+        </div>
+
+        {/* Mobile: builder inline, after the chat */}
+        {protocolProducts.length > 0 && (
+          <div className="lg:hidden">
+            <ProtocolBuilder
+              products={protocolProducts}
+              meta={latestProtocol?.meta ?? {}}
+              isStreaming={isLoading}
+              onCheckout={startCheckout}
+            />
+          </div>
+        )}
       </div>
 
-      {/* ───── Composer ───── */}
-      <div className="pointer-events-none sticky bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-background via-background/95 to-transparent pb-6 pt-10">
-        <div className="pointer-events-auto mx-auto w-full max-w-2xl px-5">
-          {!hasConversation && (
-            <div className="mb-4 flex flex-wrap justify-center gap-2">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => submit(s)}
-                  className="rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-[12.5px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
+      {/* Docked composer */}
+      <DockedComposer
+        draft={draft}
+        setDraft={setDraft}
+        inputRef={inputRef}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+      />
+    </div>
+  );
+}
 
-          <form
-            onSubmit={handleSubmit}
-            className="group relative flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_8px_30px_-12px_oklch(0_0_0_/_0.15)] transition-colors focus-within:border-foreground/50"
-          >
-            <textarea
-              ref={inputRef}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-              rows={1}
-              placeholder={
-                hasConversation
-                  ? "Reply…"
-                  : "Tell me what is going on — sleep, focus, recovery, longevity…"
+// ───────────────────────────────────────────────────────────────────
+// Landing state
+// ───────────────────────────────────────────────────────────────────
+
+function LandingState({
+  draft,
+  setDraft,
+  inputRef,
+  onSubmit,
+  onChip,
+  onUseExample,
+  isLoading,
+}: {
+  draft: string;
+  setDraft: (s: string) => void;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  onSubmit: (e: FormEvent) => void;
+  onChip: (prompt: string) => void;
+  onUseExample: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <div className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-5">
+      {/* Centered hero + composer */}
+      <div className="flex w-full flex-1 flex-col items-center justify-center py-16 sm:py-24">
+        <h1 className="text-balance text-center text-[36px] font-medium leading-[1.05] tracking-tight text-foreground sm:text-[48px]">
+          What version of yourself are you
+          <br className="hidden sm:block" /> working toward?
+        </h1>
+        <p className="mt-4 max-w-md text-center text-[14.5px] leading-relaxed text-muted-foreground">
+          Talk to Dr. Levin&rsquo;s AI guide. She&rsquo;ll route you to the
+          smallest peptide protocol that fits, or to none at all.
+        </p>
+
+        <form
+          onSubmit={onSubmit}
+          className="group relative mt-8 flex w-full max-w-2xl items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_24px_60px_-20px_oklch(0.55_0.22_260/_0.25)] transition-colors focus-within:border-foreground/50"
+        >
+          <textarea
+            ref={inputRef}
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSubmit(e as unknown as FormEvent);
               }
-              className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !draft.trim()}
-              aria-label="Send"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
-            >
-              <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
-            </button>
-          </form>
+            }}
+            rows={1}
+            placeholder="Sleep, focus, recovery, longevity — what are you working on?"
+            className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2.5 text-[15.5px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !draft.trim()}
+            aria-label="Send"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
+          >
+            <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
+          </button>
+        </form>
 
-          <p className="mt-3 text-center text-[11px] text-muted-foreground">
-            Educational only. Not medical advice. These statements have not
-            been evaluated by the FDA.
-          </p>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          {CHIP_ORDER.map((c) => (
+            <QuickReplyChip key={c} chip={c} onClick={onChip} />
+          ))}
+        </div>
+
+        <p className="mt-5 text-center text-[11px] text-muted-foreground">
+          Educational only. Not medical advice. These statements have not
+          been evaluated by the FDA.
+        </p>
+      </div>
+
+      {/* Trust + protocol preview block, below the fold */}
+      <div className="w-full pb-16">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          <ClinicianCard />
+          <ProtocolPreview onUseExample={onUseExample} />
+        </div>
+
+        <div className="mt-10">
+          <div className="mb-4 flex items-baseline justify-between">
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+              Operators on the protocol
+            </p>
+            <p className="text-[11.5px] text-muted-foreground">
+              Outcomes self-reported · 30-day return on every order
+            </p>
+          </div>
+          <TestimonialStrip />
         </div>
       </div>
     </div>
   );
 }
 
-function RecommendationCard({
-  products,
-  onCheckout,
+// ───────────────────────────────────────────────────────────────────
+// Docked composer (used during an active conversation)
+// ───────────────────────────────────────────────────────────────────
+
+function DockedComposer({
+  draft,
+  setDraft,
+  inputRef,
+  onSubmit,
+  isLoading,
 }: {
-  products: ProtocolProduct[];
-  onCheckout: () => void;
+  draft: string;
+  setDraft: (s: string) => void;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  onSubmit: (e: FormEvent) => void;
+  isLoading: boolean;
 }) {
-  const subtotal = products.reduce((s, p) => s + p.price, 0);
-
   return (
-    <div className="mt-5 w-full max-w-md rounded-2xl border border-border bg-surface/60 p-1">
-      <div className="rounded-[14px] bg-background px-4 pb-4 pt-3.5">
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
-            Recommended protocol
-          </p>
-          <Check className="h-3.5 w-3.5 text-foreground" />
-        </div>
-
-        <ul className="mt-3 divide-y divide-border/60">
-          {products.map((p) => (
-            <li
-              key={p.id}
-              className="flex items-baseline justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
-            >
-              <div className="min-w-0">
-                <p className="text-[14px] font-medium text-foreground">
-                  {p.name}
-                </p>
-                <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                  {p.active}
-                </p>
-              </div>
-              <p className="shrink-0 text-[13.5px] font-medium tabular-nums text-foreground">
-                ${p.price}
-              </p>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-          <span className="text-[12.5px] text-muted-foreground">Subtotal</span>
-          <span className="text-[14px] font-semibold tabular-nums text-foreground">
-            ${subtotal}
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={onCheckout}
-          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-foreground py-2.5 text-[13.5px] font-medium text-background transition-opacity hover:opacity-90"
+    <div className="pointer-events-none sticky bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-background via-background/95 to-transparent pb-6 pt-10">
+      <div className="pointer-events-auto mx-auto w-full max-w-3xl px-5">
+        <form
+          onSubmit={onSubmit}
+          className="group relative flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_8px_30px_-12px_oklch(0_0_0_/_0.15)] transition-colors focus-within:border-foreground/50"
         >
-          <Plus className="h-3.5 w-3.5" />
-          Add to cart & check out
-        </button>
+          <textarea
+            ref={inputRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSubmit(e as unknown as FormEvent);
+              }
+            }}
+            rows={1}
+            placeholder="Reply…"
+            className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !draft.trim()}
+            aria-label="Send"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
+          >
+            <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
+          </button>
+        </form>
+
+        <p className="mt-3 text-center text-[11px] text-muted-foreground">
+          Educational only. Not medical advice. Reviewed by Dr. Levin, MD.
+        </p>
       </div>
     </div>
   );
