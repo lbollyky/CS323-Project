@@ -15,7 +15,7 @@ import {
 import { ClinicianCard } from "@/components/clinician-card";
 import { TestimonialStrip } from "@/components/testimonial-strip";
 import { ProtocolPreview } from "@/components/protocol-preview";
-import { GoalTileGrid } from "@/components/goal-tile";
+import { GoalTileBackbone } from "@/components/goal-tile-backbone";
 
 const ALLOWED_IDS = new Set(PRODUCTS.map((p) => p.id));
 
@@ -306,12 +306,13 @@ function LandingState({
           </button>
         </form>
 
-        {/* Goal tiles — primary on-ramp, in place of small chips */}
-        <div className="mt-8 w-full">
-          <p className="mb-3 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+        {/* Goal tiles, anchored to a peptide backbone — primary on-ramp. */}
+        <div className="mt-10 w-full">
+          {/* Sub-lg fallback eyebrow; the backbone rail carries its own at lg+. */}
+          <p className="mb-3 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground lg:hidden">
             Jump in by goal
           </p>
-          <GoalTileGrid onSelect={onChip} />
+          <GoalTileBackbone onSelect={onChip} />
         </div>
 
         <p className="mt-6 text-center text-[11px] text-muted-foreground">

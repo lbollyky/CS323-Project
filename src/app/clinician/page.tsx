@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
+import { SiteBackdrop } from "@/components/backdrop/site-backdrop";
 import { ClinicianCard } from "@/components/clinician-card";
 import { PRIMARY_CLINICIAN } from "@/lib/clinician";
 import { getUser } from "@/lib/auth";
@@ -16,9 +17,11 @@ export default async function ClinicianPage() {
   const c = PRIMARY_CLINICIAN;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <SiteNav user={user} />
-      <main className="flex-1">
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+      <SiteBackdrop />
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <SiteNav user={user} />
+        <main className="flex-1">
         <section className="mx-auto max-w-3xl px-5 pb-20 pt-14 sm:pt-20">
           <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             Clinician
@@ -150,7 +153,8 @@ export default async function ClinicianPage() {
             nursing, under 18, or taking prescription medication.
           </p>
         </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

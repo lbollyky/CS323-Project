@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PRODUCTS } from "@/lib/products";
 import { SiteNav } from "@/components/site-nav";
+import { SiteBackdrop } from "@/components/backdrop/site-backdrop";
 import { ShopAddToCartButton } from "@/components/shop-add-to-cart-button";
 import { getUser } from "@/lib/auth";
 
@@ -17,9 +18,11 @@ export default async function ShopPage() {
   const stack = PRODUCTS.find((p) => p.bundle_of);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <SiteNav user={user} />
-      <main className="flex-1">
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+      <SiteBackdrop />
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <SiteNav user={user} />
+        <main className="flex-1">
         <section className="mx-auto max-w-5xl px-5 pb-20 pt-14 sm:pt-20">
           <div className="max-w-2xl">
             <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -138,7 +141,8 @@ export default async function ShopPage() {
             to anti-doping testing.
           </div>
         </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
