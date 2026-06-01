@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, ChevronDown } from "lucide-react";
 import { PRODUCTS, getProduct, type ProtocolProduct } from "@/lib/products";
 import { useCartStore } from "@/stores/cart-store";
 import { cn } from "@/lib/utils";
@@ -19,16 +19,23 @@ import { GoalTileBackbone } from "@/components/goal-tile-backbone";
 
 const ALLOWED_IDS = new Set(PRODUCTS.map((p) => p.id));
 
+// Matches the quick-reply marker the model appends to question turns, e.g.
+// "[[suggest: Trouble falling asleep | I wake at 3 a.m. | Both]]".
+// Tolerant of a partial/streaming marker so we can hide it mid-stream.
+const SUGGEST_RE = /\[\[\s*suggest:\s*([\s\S]*?)\]\]/i;
+const SUGGEST_PARTIAL_RE = /\[\[\s*suggest:[\s\S]*$/i;
+
 interface ParsedRecommendation {
   body: string;
   ids: string[];
   meta: ProtocolMeta;
+  suggestions: string[];
 }
 
 /**
- * Pulls the structured `protocol` JSON block out of the assistant message
- * and returns the cleaned prose plus the parsed metadata. Tolerant of
- * partial blocks while the response is still streaming.
+ * Pulls the structured `protocol` JSON block and the quick-reply marker out
+ * of the assistant message, returning the cleaned prose plus parsed data.
+ * Tolerant of partial blocks while the response is still streaming.
  */
 function extractRecommendation(text: string): ParsedRecommendation {
   const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
@@ -53,10 +60,25 @@ function extractRecommendation(text: string): ParsedRecommendation {
     } catch {
       /* ignore — likely mid-stream */
     }
-    body = text.replace(/```json[\s\S]*?```/g, "").trim();
+    body = body.replace(/```json[\s\S]*?```/g, "").trim();
   }
 
-  return { body, ids, meta };
+  // Parse + strip the quick-reply marker.
+  let suggestions: string[] = [];
+  const suggestMatch = body.match(SUGGEST_RE);
+  if (suggestMatch) {
+    suggestions = suggestMatch[1]
+      .split("|")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+    body = body.replace(SUGGEST_RE, "").trim();
+  } else {
+    // Hide a half-streamed marker so the user never sees "[[suggest:".
+    body = body.replace(SUGGEST_PARTIAL_RE, "").trim();
+  }
+
+  return { body, ids, meta, suggestions };
 }
 
 export function ProtocolChat() {
@@ -97,6 +119,24 @@ export function ProtocolChat() {
       .map((id) => getProduct(id))
       .filter((p): p is ProtocolProduct => Boolean(p));
   }, [latestProtocol]);
+
+  // Quick-reply chips come from the most recent assistant message. We hide
+  // them while a response is streaming and once the user starts typing.
+  const suggestions = useMemo<string[]>(() => {
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant") return [];
+    const raw =
+      last.parts
+        ?.filter(
+          (p): p is { type: "text"; text: string } => p.type === "text",
+        )
+        .map((p) => p.text)
+        .join("") ?? "";
+    return extractRecommendation(raw).suggestions;
+  }, [messages]);
+
+  const showSuggestions =
+    !isLoading && draft.trim().length === 0 && suggestions.length > 0;
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -242,6 +282,8 @@ export function ProtocolChat() {
         inputRef={inputRef}
         onSubmit={handleSubmit}
         isLoading={isLoading}
+        suggestions={showSuggestions ? suggestions : []}
+        onPickSuggestion={(text) => submit(text)}
       />
     </div>
   );
@@ -268,67 +310,96 @@ function LandingState({
   onUseExample: () => void;
   isLoading: boolean;
 }) {
+  // Focus the composer on first paint, but only on pointer-fine devices
+  // — autoFocus on touch yanks the on-screen keyboard up before the user
+  // has read the headline.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(hover: none)").matches) return;
+    inputRef.current?.focus();
+  }, [inputRef]);
+
   return (
     <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-5">
-      {/* Centered hero + composer */}
-      <div className="flex w-full flex-1 flex-col items-center justify-center py-14 sm:py-20">
-        <h1 className="text-balance text-center text-[36px] font-medium leading-[1.04] tracking-tight text-foreground sm:text-[52px]">
-          What version of yourself are you
-          <br className="hidden sm:block" /> working toward?
-        </h1>
+      {/* ── Hero ─ claims its own viewport so the trust block is
+         guaranteed below the fold. The first visit reads as one
+         confident stage, not a stack of sections. */}
+      <section className="flex w-full flex-col items-center min-h-[calc(100dvh-3.5rem)] py-10 sm:py-12">
+        <div className="flex w-full flex-1 flex-col items-center justify-center">
+          <h1 className="text-balance text-center text-[36px] font-medium leading-[1.04] tracking-tight text-foreground sm:text-[52px]">
+            What version of yourself are you
+            <br className="hidden sm:block" /> working toward?
+          </h1>
 
-        <form
-          onSubmit={onSubmit}
-          className="group relative mt-10 flex w-full max-w-2xl items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_24px_60px_-20px_oklch(0.55_0.22_260/_0.22)] transition-colors focus-within:border-foreground/50"
-        >
-          <textarea
-            ref={inputRef}
-            autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                onSubmit(e as unknown as FormEvent);
-              }
-            }}
-            rows={1}
-            placeholder="Sleep, focus, recovery, longevity — what are you working on?"
-            className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2.5 text-[15.5px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !draft.trim()}
-            aria-label="Send"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
+          <form
+            onSubmit={onSubmit}
+            className="group relative mt-10 flex w-full max-w-2xl items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_24px_60px_-20px_oklch(0.55_0.22_260/_0.22)] transition-colors focus-within:border-foreground/50"
           >
-            <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
-          </button>
-        </form>
+            <textarea
+              ref={inputRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  onSubmit(e as unknown as FormEvent);
+                }
+              }}
+              rows={1}
+              placeholder="Sleep, focus, recovery, longevity — what are you working on?"
+              aria-label="Tell the protocol guide what you're working on"
+              autoComplete="off"
+              autoCorrect="off"
+              className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2.5 text-[16px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !draft.trim()}
+              aria-label="Send"
+              className="focus-ring inline-flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
+            >
+              <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
+            </button>
+          </form>
 
-        {/* Goal tiles, anchored to a peptide backbone — primary on-ramp. */}
-        <div className="mt-10 w-full">
-          {/* Sub-lg fallback eyebrow; the backbone rail carries its own at lg+. */}
-          <p className="mb-3 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground lg:hidden">
-            Jump in by goal
-          </p>
-          <GoalTileBackbone onSelect={onChip} />
+          {/* Goal tiles, anchored to a peptide backbone — primary on-ramp. */}
+          <div className="mt-10 w-full">
+            {/* Sub-lg fallback eyebrow; the rail carries its own at lg+. */}
+            <p className="mb-3 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground lg:hidden">
+              Jump in by goal
+            </p>
+            <GoalTileBackbone onSelect={onChip} />
+          </div>
+
         </div>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground">
-          Educational only. Not medical advice. These statements have not
-          been evaluated by the FDA.
-        </p>
-      </div>
+        {/* Scroll affordance, anchored at the bottom of the hero. */}
+        <a
+          href="#more"
+          aria-label="See clinician and example protocol below"
+          className="focus-ring group mt-6 inline-flex select-none flex-col items-center gap-1.5 rounded-md px-3 py-1 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <span className="font-mono text-[10px] uppercase tracking-[0.22em]">
+            More below
+          </span>
+          <ChevronDown
+            className="h-4 w-4 animate-bounce-soft transition-transform group-hover:translate-y-0.5"
+            strokeWidth={1.5}
+          />
+        </a>
+      </section>
 
-      {/* Trust + protocol preview block, below the fold */}
-      <div className="w-full pb-16">
+      {/* ── Trust + protocol preview ─ the deliberate second chapter. */}
+      <section
+        id="more"
+        className="w-full scroll-mt-20 pb-20 pt-16 sm:pt-24"
+      >
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           <ClinicianCard />
           <ProtocolPreview onUseExample={onUseExample} />
         </div>
 
-        <div className="mt-10">
+        <div className="mt-16">
           <div className="mb-4 flex items-baseline justify-between">
             <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
               Operators on the protocol
@@ -339,7 +410,7 @@ function LandingState({
           </div>
           <TestimonialStrip />
         </div>
-      </div>
+      </section>
     </div>
   );
 }
@@ -354,16 +425,34 @@ function DockedComposer({
   inputRef,
   onSubmit,
   isLoading,
+  suggestions,
+  onPickSuggestion,
 }: {
   draft: string;
   setDraft: (s: string) => void;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
   onSubmit: (e: FormEvent) => void;
   isLoading: boolean;
+  suggestions: string[];
+  onPickSuggestion: (text: string) => void;
 }) {
   return (
     <div className="pointer-events-none sticky bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-background via-background/95 to-transparent pb-6 pt-10">
       <div className="pointer-events-auto mx-auto w-full max-w-3xl px-5">
+        {suggestions.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => onPickSuggestion(s)}
+                className="focus-ring select-none rounded-full border border-border bg-background px-3.5 py-2 text-[13.5px] text-foreground shadow-sm transition-colors hover:border-foreground/40 hover:bg-surface"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
         <form
           onSubmit={onSubmit}
           className="group relative flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-[0_1px_0_oklch(0_0_0_/_0.03),0_8px_30px_-12px_oklch(0_0_0_/_0.15)] transition-colors focus-within:border-foreground/50"
@@ -380,13 +469,16 @@ function DockedComposer({
             }}
             rows={1}
             placeholder="Reply…"
-            className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            aria-label="Reply to the protocol guide"
+            autoComplete="off"
+            autoCorrect="off"
+            className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2 text-[16px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
           />
           <button
             type="submit"
             disabled={isLoading || !draft.trim()}
             aria-label="Send"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
+            className="focus-ring inline-flex h-9 w-9 shrink-0 select-none items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-30"
           >
             <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
           </button>

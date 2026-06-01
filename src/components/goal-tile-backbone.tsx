@@ -239,7 +239,7 @@ function ColumnTile({
     <button
       type="button"
       onClick={() => onClick(CATEGORY_PROMPT[category])}
-      className="group relative flex h-full min-h-[120px] w-full items-center justify-between overflow-hidden rounded-2xl border border-transparent p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg sm:p-5"
+      className="hover-lift focus-ring group relative flex h-full min-h-[120px] w-full select-none items-center justify-between overflow-hidden rounded-2xl border border-transparent p-4 text-left sm:p-5"
       style={{
         background: `linear-gradient(135deg, ${p.bgFrom} 0%, ${p.bgTo} 100%)`,
       }}

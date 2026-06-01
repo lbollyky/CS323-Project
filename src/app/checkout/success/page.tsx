@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { ClearCartOnMount } from "@/components/clear-cart-on-mount";
+import { SaveProtocolFromCheckout } from "@/components/save-protocol-from-checkout";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { getUser } from "@/lib/auth";
 
@@ -50,6 +51,12 @@ export default async function CheckoutSuccessPage({
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SiteNav user={user} />
       <ClearCartOnMount />
+      {order && order.lineItems.length > 0 && (
+        <SaveProtocolFromCheckout
+          lineItemNames={order.lineItems.map((li) => li.name)}
+          goal="Active protocol"
+        />
+      )}
       <main className="flex flex-1 flex-col items-center px-5 pb-20 pt-16 sm:pt-24">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
           <Check className="h-5 w-5" strokeWidth={2.6} />

@@ -136,3 +136,53 @@ drop trigger if exists daily_logs_touch on public.daily_logs;
 create trigger daily_logs_touch
   before update on public.daily_logs
   for each row execute function public.touch_updated_at();
+
+-- ─── 3. Active protocol on profile ───────────────────────────
+-- The protocol the user is running — set at checkout or from the
+-- track page. Shown at the top of /track.
+alter table public.profiles
+  add column if not exists active_protocol_ids text[] not null default '{}',
+  add column if not exists protocol_goal text,
+  add column if not exists protocol_duration_weeks int check (protocol_duration_weeks between 1 and 52),
+  add column if not exists protocol_started_at date;
+
+-- ─── 4. Wearable connections ─────────────────────────────────
+-- OAuth tokens for Oura / Whoop, or a linked flag for Apple Health.
+-- access_token value of 'demo' means demo-mode sync (no OAuth keys).
+create table if not exists public.wearable_connections (
+  id            uuid primary key default uuid_generate_v4(),
+  user_id       uuid not null references public.profiles(id) on delete cascade,
+  provider      text not null check (provider in ('oura', 'whoop', 'apple_health')),
+  access_token  text,
+  refresh_token text,
+  token_expires_at timestamptz,
+  connected_at  timestamptz not null default now(),
+  last_sync_at  timestamptz,
+  unique (user_id, provider)
+);
+
+create index if not exists idx_wearable_connections_user
+  on public.wearable_connections (user_id);
+
+alter table public.wearable_connections enable row level security;
+
+drop policy if exists "wearable_connections select own" on public.wearable_connections;
+drop policy if exists "wearable_connections insert own" on public.wearable_connections;
+drop policy if exists "wearable_connections update own" on public.wearable_connections;
+drop policy if exists "wearable_connections delete own" on public.wearable_connections;
+
+create policy "wearable_connections select own"
+  on public.wearable_connections for select
+  using (auth.uid() = user_id);
+
+create policy "wearable_connections insert own"
+  on public.wearable_connections for insert
+  with check (auth.uid() = user_id);
+
+create policy "wearable_connections update own"
+  on public.wearable_connections for update
+  using (auth.uid() = user_id);
+
+create policy "wearable_connections delete own"
+  on public.wearable_connections for delete
+  using (auth.uid() = user_id);

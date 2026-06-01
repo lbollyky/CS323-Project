@@ -1,9 +1,17 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SiteNav } from "@/components/site-nav";
+import { ProtocolHeader } from "@/components/protocol-header";
+import { WearableSyncSection } from "@/components/wearable-sync-section";
 import { TrackForm } from "@/components/track-form";
 import { TrackHistory } from "@/components/track-history";
 import { PRODUCTS } from "@/lib/products";
+import {
+  expandProtocolIds,
+  isWearableOAuthConfigured,
+  loadUserProtocol,
+  loadWearableConnections,
+} from "@/lib/track/load-track-data";
 import type { DailyLog } from "@/types/track";
 
 export const metadata = {
@@ -37,7 +45,11 @@ async function loadLogs(userId: string): Promise<DailyLog[]> {
 
 export default async function TrackPage() {
   const user = await requireUser("/track");
-  const logs = await loadLogs(user.id);
+  const [logs, userProtocol, connections] = await Promise.all([
+    loadLogs(user.id),
+    loadUserProtocol(user.id),
+    loadWearableConnections(user.id),
+  ]);
 
   const today = todayISO();
   const todayLog = logs.find((l) => l.log_date === today) ?? null;
@@ -48,38 +60,67 @@ export default async function TrackPage() {
     name: p.name,
   }));
 
+  const defaultProtocolIds = expandProtocolIds(
+    userProtocol?.active_protocol_ids ?? [],
+  );
+
+  const oauthConfigured = {
+    oura: isWearableOAuthConfigured("oura"),
+    whoop: isWearableOAuthConfigured("whoop"),
+    apple_health: false,
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SiteNav user={user} />
       <main className="flex-1">
-        <div className="mx-auto max-w-3xl px-5 pb-20 pt-12 sm:pt-16">
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                Daily check-in
-              </p>
-              <h1 className="mt-2 text-[28px] font-medium tracking-tight sm:text-[32px]">
-                {todayLog ? "Today, already logged." : "How was today?"}
-              </h1>
-            </div>
-            <p className="text-[12.5px] text-muted-foreground">
-              {today} · signed in as {user.email}
-            </p>
+        <div className="mx-auto max-w-6xl px-5 pb-20 pt-12 sm:pt-16">
+          <ProtocolHeader protocol={userProtocol} />
+
+          <div className="mt-6">
+            <WearableSyncSection
+              connections={connections}
+              oauthConfigured={oauthConfigured}
+            />
           </div>
 
-          <p className="mt-2 max-w-xl text-[13.5px] leading-relaxed text-muted-foreground">
-            Track which protocol you took, how you slept, energy, focus, mood,
-            and (if you wear one) Oura / Whoop metrics. Most users report
-            changes between weeks 2 and 6 — the trend is what matters.
-          </p>
+          {/* Two-column workspace: today's check-in on the left,
+              running history on the right. Stacks on small screens. */}
+          <div className="mt-10 grid gap-x-8 gap-y-10 lg:grid-cols-2">
+            {/* Daily check-in */}
+            <div>
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <div>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Daily check-in
+                  </p>
+                  <h1 className="mt-2 text-[28px] font-medium tracking-tight sm:text-[32px]">
+                    {todayLog ? "Today, already logged." : "How was today?"}
+                  </h1>
+                </div>
+                <p className="text-[12.5px] text-muted-foreground">{today}</p>
+              </div>
 
-          <TrackForm
-            today={today}
-            existing={todayLog}
-            protocols={protocols}
-          />
+              <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
+                Log how you felt today. Your protocol is pre-selected; wearable
+                metrics fill in when you sync above.
+              </p>
 
-          <TrackHistory logs={recent} protocols={protocols} />
+              <div className="mt-6">
+                <TrackForm
+                  today={today}
+                  existing={todayLog}
+                  protocols={protocols}
+                  defaultProtocolIds={defaultProtocolIds}
+                />
+              </div>
+            </div>
+
+            {/* History */}
+            <div>
+              <TrackHistory logs={recent} protocols={protocols} />
+            </div>
+          </div>
         </div>
       </main>
     </div>

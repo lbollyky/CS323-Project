@@ -92,6 +92,14 @@
   * {
     @apply border-border;
   }
+  html {
+    /* Prevent iOS landscape text resizing and the default tap flash. */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    /* In-page anchor links scroll smoothly; respected only when the
+       user hasn't opted out via prefers-reduced-motion (below). */
+    scroll-behavior: smooth;
+  }
   html, body {
     @apply bg-background text-foreground;
     font-feature-settings: "ss01", "cv11";
@@ -206,15 +214,58 @@
   animation: chyron-scroll 140s linear infinite;
 }
 
+/* Hero scroll affordance — a small, calm vertical nudge. */
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(4px); }
+}
+.animate-bounce-soft {
+  animation: bounce-soft 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .animate-marquee,
   .animate-pulse-ring,
   .animate-shimmer,
   .animate-orbit,
   .animate-float-slow,
   .animate-chyron,
+  .animate-bounce-soft,
   [style*="peptide-node-breathe"] {
     animation: none !important;
+  }
+}
+
+/* ─── Interaction utilities ───────────────────────────────────────── */
+
+/*
+ * A visible focus-ring for keyboard users that respects border-radius.
+ * Pair with `outline-none` (already on most of our buttons via Tailwind's
+ * `focus:outline-none`). Uses a two-stop box-shadow so it works against
+ * any background.
+ */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px var(--ring);
+}
+
+/*
+ * Hover lift, gated to true pointer devices so the transform doesn't
+ * stick after a tap on touch (which would otherwise flash hover state
+ * and leave the tile lifted until the next tap elsewhere).
+ */
+.hover-lift {
+  transition:
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px -10px oklch(0 0 0 / 0.15);
   }
 }
 

@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { CapsuleIllustration } from "@/components/capsule-illustration";
 import { ClinicianCard } from "@/components/clinician-card";
-import { PeptideMechanism } from "@/components/peptide-mechanism";
 import { ProtocolTimeline } from "@/components/protocol-timeline";
 import { categoryForProduct, getPalette } from "@/lib/category-palette";
 import type { ProtocolProduct } from "@/lib/products";
@@ -91,8 +90,6 @@ export function ProtocolBuilder({
             </div>
             <DosingSchedule products={products} />
           </section>
-
-          <PeptideMechanism productId={products[0].id} compact />
 
           <ProtocolTimeline
             productId={products[0].id}

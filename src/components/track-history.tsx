@@ -44,14 +44,19 @@ export function TrackHistory({
 }) {
   if (logs.length === 0) {
     return (
-      <div className="mt-12 rounded-2xl border border-dashed border-border bg-background p-8 text-center">
-        <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
+      <div>
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           History
         </p>
-        <p className="mt-2 text-[13.5px] text-muted-foreground">
-          Your last fourteen days will show here. Log a few in a row to
-          see trend lines.
-        </p>
+        <h2 className="mt-2 text-[28px] font-medium tracking-tight sm:text-[32px]">
+          Last 14 days
+        </h2>
+        <div className="mt-5 rounded-2xl border border-dashed border-border bg-background p-8 text-center">
+          <p className="text-[13.5px] text-muted-foreground">
+            Your last fourteen days will show here. Log a few in a row to
+            see trend lines.
+          </p>
+        </div>
       </div>
     );
   }
@@ -67,17 +72,20 @@ export function TrackHistory({
   }));
 
   return (
-    <div className="mt-12">
-      <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
+    <div>
+      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         Last 14 days
       </p>
-      <h2 className="mt-2 text-[20px] font-medium tracking-tight">
-        {logs.length} {logs.length === 1 ? "entry" : "entries"} · trend at a
-        glance
+      <h2 className="mt-2 text-[28px] font-medium tracking-tight sm:text-[32px]">
+        Trend at a glance
       </h2>
+      <p className="mt-2 text-[13.5px] text-muted-foreground">
+        {logs.length} {logs.length === 1 ? "entry" : "entries"} logged in the
+        last two weeks.
+      </p>
 
       {/* Averages strip */}
-      <div className="mt-5 grid gap-3 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {averages.map((a) => (
           <div
             key={a.label}

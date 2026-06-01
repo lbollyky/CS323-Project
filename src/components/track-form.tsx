@@ -30,10 +30,12 @@ export function TrackForm({
   today,
   existing,
   protocols,
+  defaultProtocolIds = [],
 }: {
   today: string;
   existing: DailyLog | null;
   protocols: Protocol[];
+  defaultProtocolIds?: string[];
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export function TrackForm({
   return (
     <form
       action={handleSubmit}
-      className="mt-8 rounded-2xl border border-border bg-background p-1"
+      className="rounded-2xl border border-border bg-background p-1"
     >
       <input type="hidden" name="log_date" value={today} />
       <div className="rounded-[14px] bg-background p-5 sm:p-7">
@@ -62,8 +64,9 @@ export function TrackForm({
         <Section title="What did you take today?">
           <div className="flex flex-wrap gap-2">
             {protocols.map((p) => {
-              const checked =
-                existing?.protocols_taken?.includes(p.id) ?? false;
+              const checked = existing
+                ? (existing.protocols_taken?.includes(p.id) ?? false)
+                : defaultProtocolIds.includes(p.id);
               return (
                 <ProtocolChip
                   key={p.id}
@@ -115,7 +118,11 @@ export function TrackForm({
         {/* Wearable */}
         <Section
           title="Wearable metrics"
-          subtitle="Optional — fill in if your Oura / Whoop / Apple Watch has them."
+          subtitle={
+            existing?.hrv_ms != null
+              ? "Last synced from your connected device — edit if needed."
+              : "Connect a device above to auto-fill, or enter manually."
+          }
         >
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <WearableInput
