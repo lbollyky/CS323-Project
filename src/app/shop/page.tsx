@@ -39,7 +39,7 @@ export default async function ShopPage() {
             <p className="mt-3 text-[12.5px] text-muted-foreground">
               Not sure what to start with?{" "}
               <Link
-                href="/"
+                href="/guide"
                 className="inline-flex items-center gap-0.5 text-foreground underline-offset-4 hover:underline"
               >
                 Talk to the protocol guide
@@ -82,7 +82,7 @@ export default async function ShopPage() {
                 <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
                   <ShopAddToCartButton product={stack} primary />
                   <Link
-                    href="/"
+                    href="/guide"
                     className="inline-flex h-10 items-center justify-center rounded-xl border border-border px-4 text-[13.5px] text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
                   >
                     Not sure? Ask the guide

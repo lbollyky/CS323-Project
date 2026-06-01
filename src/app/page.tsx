@@ -1,19 +1,15 @@
-import { ProtocolChat } from "@/components/protocol-chat";
-import { SiteNav } from "@/components/site-nav";
-import { ChatBackdrop } from "@/components/chat-backdrop";
+import { redirect } from "next/navigation";
+import { GuideScreen } from "@/components/guide-screen";
 import { getUser } from "@/lib/auth";
 
 export default async function Home() {
   const user = await getUser();
-  return (
-    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
-      <ChatBackdrop />
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <SiteNav user={user} />
-        <main className="flex flex-1 flex-col">
-          <ProtocolChat />
-        </main>
-      </div>
-    </div>
-  );
+
+  // Signed-in users have already onboarded — send them straight to their
+  // tracker on first load. The guide stays reachable at /guide.
+  if (user) {
+    redirect("/track");
+  }
+
+  return <GuideScreen user={user} />;
 }

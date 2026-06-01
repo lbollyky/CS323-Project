@@ -134,7 +134,7 @@ export default async function ClinicianPage() {
               you that you do not need one.
             </p>
             <Link
-              href="/"
+              href="/guide"
               className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-medium text-foreground underline-offset-4 hover:underline"
             >
               Talk to the protocol guide

@@ -29,6 +29,12 @@ export function SiteNav({ user }: { user?: User | null }) {
           {isAuthed ? (
             <>
               <Link
+                href="/guide"
+                className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Guide
+              </Link>
+              <Link
                 href="/track"
                 className="rounded-full px-3 py-1.5 text-foreground transition-colors hover:text-foreground"
               >

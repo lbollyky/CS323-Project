@@ -1,4 +1,5 @@
 import type { DailyLog } from "@/types/track";
+import { TrackTrendChart } from "@/components/track-trend-chart";
 
 interface Protocol {
   id: string;
@@ -84,6 +85,11 @@ export function TrackHistory({
         last two weeks.
       </p>
 
+      {/* Trend chart */}
+      <div className="mt-5">
+        <TrackTrendChart logs={logs} />
+      </div>
+
       {/* Averages strip */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {averages.map((a) => (
@@ -119,8 +125,29 @@ export function TrackHistory({
         ))}
       </div>
 
-      {/* Day-by-day list */}
-      <ul className="mt-7 divide-y divide-border/60 rounded-2xl border border-border bg-background">
+      {/* Day-by-day list (collapsed by default, click to expand) */}
+      <details className="group mt-7 rounded-2xl border border-border bg-background">
+        <summary className="focus-ring flex cursor-pointer select-none list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 [&::-webkit-details-marker]:hidden">
+          <span className="text-[13.5px] font-medium">Day-by-day log</span>
+          <span className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+            {logs.length} {logs.length === 1 ? "day" : "days"}
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              className="h-4 w-4 transition-transform duration-200 group-open:rotate-180"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 6l4 4 4-4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </summary>
+        <ul className="divide-y divide-border/60 border-t border-border">
         {logs.map((log) => (
           <li key={log.id} className="px-5 py-4">
             <div className="flex items-baseline justify-between gap-3">
@@ -179,7 +206,8 @@ export function TrackHistory({
             )}
           </li>
         ))}
-      </ul>
+        </ul>
+      </details>
     </div>
   );
 }
