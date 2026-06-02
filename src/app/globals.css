@@ -223,6 +223,40 @@
   animation: bounce-soft 1.8s ease-in-out infinite;
 }
 
+/* Modal entrance — quick, calm fade + rise. */
+@keyframes modal-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modal-panel-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-modal-overlay {
+  animation: modal-overlay-in 180ms ease-out forwards;
+}
+.animate-modal-panel {
+  animation: modal-panel-in 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Protocol "thinking" — each step slides in as the guide works. */
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-step-in {
+  animation: step-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Indeterminate progress sweep for the thinking panel. */
+@keyframes thinking-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(220%); }
+}
+.animate-thinking-sweep {
+  animation: thinking-sweep 1.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .animate-marquee,
@@ -232,6 +266,10 @@
   .animate-float-slow,
   .animate-chyron,
   .animate-bounce-soft,
+  .animate-modal-overlay,
+  .animate-modal-panel,
+  .animate-step-in,
+  .animate-thinking-sweep,
   [style*="peptide-node-breathe"] {
     animation: none !important;
   }

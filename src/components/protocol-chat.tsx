@@ -86,6 +86,7 @@ export function ProtocolChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
+  const [lastQuery, setLastQuery] = useState("");
   const setItems = useCartStore((s) => s.setItems);
 
   const { messages, sendMessage, status } = useChat({
@@ -120,6 +121,32 @@ export function ProtocolChat() {
       .filter((p): p is ProtocolProduct => Boolean(p));
   }, [latestProtocol]);
 
+  // ── Right-side "building" animation ───────────────────────────
+  // Progress advances with the conversation (one stage per answered
+  // question) and persists across messages. When the protocol is parsed
+  // and streaming has settled, we hold a short finishing beat with every
+  // stage complete, then reveal the protocol.
+  const hasProtocol = protocolProducts.length > 0;
+  const assistantTurns = useMemo(
+    () => messages.filter((m) => m.role === "assistant").length,
+    [messages],
+  );
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    if (!hasProtocol) {
+      setRevealed(false);
+      return;
+    }
+    if (!isLoading) {
+      const t = setTimeout(() => setRevealed(true), 1100);
+      return () => clearTimeout(t);
+    }
+  }, [hasProtocol, isLoading]);
+
+  const building = hasConversation && (!hasProtocol || !revealed);
+  const buildDone = hasProtocol && !isLoading && !revealed;
+
   // Quick-reply chips come from the most recent assistant message. We hide
   // them while a response is streaming and once the user starts typing.
   const suggestions = useMemo<string[]>(() => {
@@ -150,6 +177,7 @@ export function ProtocolChat() {
     const value = (text ?? draft).trim();
     if (!value || isLoading) return;
     setDraft("");
+    setLastQuery(value);
     sendMessage({ text: value });
     inputRef.current?.focus();
   }
@@ -257,18 +285,26 @@ export function ProtocolChat() {
               products={protocolProducts}
               meta={latestProtocol?.meta ?? {}}
               isStreaming={isLoading}
+              query={lastQuery}
+              building={building}
+              buildTurns={assistantTurns}
+              buildDone={buildDone}
               onCheckout={startCheckout}
             />
           </div>
         </div>
 
         {/* Mobile: builder inline, after the chat */}
-        {protocolProducts.length > 0 && (
+        {(building || protocolProducts.length > 0) && (
           <div className="lg:hidden">
             <ProtocolBuilder
               products={protocolProducts}
               meta={latestProtocol?.meta ?? {}}
               isStreaming={isLoading}
+              query={lastQuery}
+              building={building}
+              buildTurns={assistantTurns}
+              buildDone={buildDone}
               onCheckout={startCheckout}
             />
           </div>

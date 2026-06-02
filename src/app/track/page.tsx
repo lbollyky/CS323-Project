@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SiteNav } from "@/components/site-nav";
+import { ContactProviderButton } from "@/components/contact-provider-button";
 import { ProtocolHeader } from "@/components/protocol-header";
 import { WearableSyncSection } from "@/components/wearable-sync-section";
 import { TrackForm } from "@/components/track-form";
@@ -75,6 +76,13 @@ export default async function TrackPage() {
       <SiteNav user={user} />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-5 pb-20 pt-12 sm:pt-16">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Your dashboard
+            </p>
+            <ContactProviderButton />
+          </div>
+
           <ProtocolHeader protocol={userProtocol} />
 
           <div className="mt-6">

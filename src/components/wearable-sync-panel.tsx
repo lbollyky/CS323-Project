@@ -252,11 +252,6 @@ export function WearableSyncPanel({
                     </button>
                   )}
                 </div>
-                {!oauthConfigured[p.id] && p.id !== "apple_health" && !isConnected && (
-                  <p className="mt-2 text-[10.5px] text-muted-foreground/80">
-                    Demo sync — add OAuth keys in .env.local for live data.
-                  </p>
-                )}
               </div>
             );
           })}

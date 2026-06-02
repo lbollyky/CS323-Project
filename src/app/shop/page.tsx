@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { PRODUCTS, getProduct } from "@/lib/products";
+import { PRODUCTS } from "@/lib/products";
 import { SiteNav } from "@/components/site-nav";
 import { SiteBackdrop } from "@/components/backdrop/site-backdrop";
 import { ShopAddToCartButton } from "@/components/shop-add-to-cart-button";
+import { ShopProductGrid } from "@/components/shop-product-grid";
+import { ProductModalTrigger } from "@/components/product-modal-trigger";
 import { getUser } from "@/lib/auth";
 
 export const metadata = {
@@ -17,11 +19,6 @@ export default async function ShopPage() {
   const user = await getUser();
   const single = PRODUCTS.filter((p) => !p.bundle_of);
   const stack = PRODUCTS.find((p) => p.bundle_of);
-  const stackBottles = stack
-    ? Array.from(new Set(stack.bundle_of ?? []))
-        .map((id) => getProduct(id))
-        .filter((p): p is NonNullable<typeof p> => Boolean(p?.image_url))
-    : [];
 
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-foreground">
@@ -88,86 +85,48 @@ export default async function ShopPage() {
 
                 <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
                   <ShopAddToCartButton product={stack} primary />
+                  <ProductModalTrigger
+                    product={stack}
+                    ariaLabel={`View details for ${stack.name}`}
+                    className="focus-ring inline-flex h-10 items-center justify-center rounded-xl border border-border px-4 text-[13.5px] text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+                  >
+                    View details
+                  </ProductModalTrigger>
+                </div>
+                <p className="mt-3 text-[12.5px] text-muted-foreground">
+                  Not sure where to start?{" "}
                   <Link
                     href="/guide"
-                    className="inline-flex h-10 items-center justify-center rounded-xl border border-border px-4 text-[13.5px] text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+                    className="text-foreground underline-offset-4 hover:underline"
                   >
-                    Not sure? Ask the guide
+                    Ask the protocol guide
                   </Link>
-                </div>
+                </p>
                 </div>
 
-                {stackBottles.length > 0 && (
-                  <div className="order-first flex overflow-hidden rounded-xl bg-[linear-gradient(165deg,#f6f6f7_0%,#efeff0_52%,#e7e7ea_100%)] lg:order-last">
-                    {stackBottles.map((b) => (
-                      <div key={b.id} className="relative aspect-[3/4] flex-1">
-                        <Image
-                          src={b.image_url as string}
-                          alt={`${b.name} bottle`}
-                          fill
-                          sizes="(min-width: 1024px) 200px, 45vw"
-                          className="object-cover object-center"
-                        />
-                      </div>
-                    ))}
-                  </div>
+                {stack.image_url && (
+                  <ProductModalTrigger
+                    product={stack}
+                    ariaLabel={`View details for ${stack.name}`}
+                    className="focus-ring group/img relative order-first block aspect-[4/5] w-full overflow-hidden rounded-xl bg-[linear-gradient(165deg,#f6f6f7_0%,#efeff0_52%,#e7e7ea_100%)] lg:order-last"
+                  >
+                    <Image
+                      src={stack.image_url}
+                      alt={`${stack.name} bottles`}
+                      fill
+                      sizes="(min-width: 1024px) 360px, 90vw"
+                      className="object-cover object-center transition-transform duration-500 ease-out group-hover/img:scale-[1.03]"
+                    />
+                    <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center bg-gradient-to-t from-foreground/30 to-transparent pb-3 pt-8 text-[12px] font-medium text-background opacity-0 transition-opacity duration-200 group-hover/img:opacity-100">
+                      View details
+                    </span>
+                  </ProductModalTrigger>
                 )}
               </div>
             </div>
           )}
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {single.map((p) => (
-              <article
-                key={p.id}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-background"
-              >
-                {p.image_url && (
-                  <div className="relative aspect-[2/3] w-full bg-[linear-gradient(165deg,#f6f6f7_0%,#efeff0_52%,#e7e7ea_100%)]">
-                    <Image
-                      src={p.image_url}
-                      alt={`${p.name} bottle`}
-                      fill
-                      sizes="(min-width: 640px) 33vw, 100vw"
-                      className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                    />
-                  </div>
-                )}
-                <div className="flex flex-1 flex-col p-5">
-                <div className="flex items-baseline justify-between">
-                  <h3 className="text-[18px] font-medium tracking-tight">
-                    {p.name}
-                  </h3>
-                  <span className="text-[16px] font-medium tabular-nums">
-                    ${p.price}
-                  </span>
-                </div>
-                <p className="mt-1 text-[12px] text-muted-foreground">
-                  {p.active}
-                </p>
-                <p className="mt-3 text-[13.5px] leading-relaxed text-foreground/80">
-                  {p.tag_line}
-                </p>
-                <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
-                  {p.mechanism}
-                </p>
-
-                <ul className="mt-4 space-y-1.5 text-[12.5px] text-muted-foreground">
-                  {p.best_for.map((b) => (
-                    <li key={b} className="flex gap-2">
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-auto flex flex-col gap-1.5 pt-5">
-                  <ShopAddToCartButton product={p} />
-                </div>
-                </div>
-              </article>
-            ))}
-          </div>
+          <ShopProductGrid products={single} />
 
           <div className="mt-12 border-t border-border/60 pt-6 text-[11.5px] leading-relaxed text-muted-foreground">
             These statements have not been evaluated by the Food and Drug

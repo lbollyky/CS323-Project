@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Sun,
   Moon,
@@ -11,6 +12,8 @@ import {
 import { CapsuleIllustration } from "@/components/capsule-illustration";
 import { ClinicianCard } from "@/components/clinician-card";
 import { ProtocolTimeline } from "@/components/protocol-timeline";
+import { ProductDetailModal } from "@/components/product-detail-modal";
+import { ProtocolThinking } from "@/components/protocol-thinking";
 import { categoryForProduct, getPalette } from "@/lib/category-palette";
 import type { ProtocolProduct } from "@/lib/products";
 import { cn } from "@/lib/utils";
@@ -33,17 +36,29 @@ export function ProtocolBuilder({
   products,
   meta,
   isStreaming,
+  query,
+  building = false,
+  buildTurns = 0,
+  buildDone = false,
   onCheckout,
   className,
 }: {
   products: ProtocolProduct[];
   meta: ProtocolMeta;
   isStreaming: boolean;
+  query?: string;
+  /** Show the staged "thinking" panel instead of the empty/protocol view. */
+  building?: boolean;
+  /** Conversation progress (answered questions) that drives the steps. */
+  buildTurns?: number;
+  /** Finishing beat — completes every step before revealing the protocol. */
+  buildDone?: boolean;
   onCheckout: () => void;
   className?: string;
 }) {
   const subtotal = products.reduce((s, p) => s + p.price, 0);
   const empty = products.length === 0;
+  const [active, setActive] = useState<ProtocolProduct | null>(null);
 
   return (
     <aside
@@ -58,7 +73,7 @@ export function ProtocolBuilder({
             Your protocol
           </p>
           <h2 className="mt-1 text-[20px] font-medium tracking-tight text-foreground">
-            {empty ? "Building…" : meta.goal ?? "Recommended"}
+            {building || empty ? "Building…" : meta.goal ?? "Recommended"}
           </h2>
         </div>
         {isStreaming && (
@@ -69,7 +84,9 @@ export function ProtocolBuilder({
         )}
       </header>
 
-      {empty ? (
+      {building ? (
+        <ProtocolThinking query={query} turns={buildTurns} done={buildDone} />
+      ) : empty ? (
         <EmptyState />
       ) : (
         <>
@@ -104,30 +121,45 @@ export function ProtocolBuilder({
               {products.map((p) => {
                 const palette = getPalette(categoryForProduct(p.id));
                 return (
-                  <li
-                    key={p.id}
-                    className="flex items-center gap-3 overflow-hidden rounded-xl border border-border/60 p-2"
-                    style={{
-                      background: `linear-gradient(135deg, ${palette.bgFrom}, ${palette.bgTo})`,
-                    }}
-                  >
-                    <CapsuleIllustration
-                      palette={palette}
-                      floating={false}
-                      className="h-14 w-14 shrink-0"
-                      tilt={-18}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13.5px] font-medium text-foreground">
-                        {p.name}
-                      </p>
-                      <p className="truncate text-[11.5px] text-foreground/65">
-                        {p.active}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[13px] font-medium tabular-nums">
-                      ${p.price}
-                    </span>
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => setActive(p)}
+                      aria-label={`View details for ${p.name}`}
+                      className="focus-ring group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-border/60 p-2 text-left transition-all duration-300 hover:-translate-y-0.5"
+                      style={{
+                        background: `linear-gradient(135deg, ${palette.bgFrom}, ${palette.bgTo})`,
+                      }}
+                    >
+                      {/* Glow + ring on hover, in the product's own hue. */}
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        style={{
+                          boxShadow: `inset 0 0 0 1.5px ${palette.accent}, 0 10px 28px -8px ${palette.accent}`,
+                        }}
+                      />
+                      <CapsuleIllustration
+                        palette={palette}
+                        floating={false}
+                        className="h-14 w-14 shrink-0"
+                        tilt={-18}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13.5px] font-medium text-foreground">
+                          {p.name}
+                        </p>
+                        <p className="truncate text-[11.5px] text-foreground/65">
+                          {p.active}
+                        </p>
+                        <span className="mt-0.5 inline-block text-[10.5px] font-medium text-foreground/55 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                          Tap for details →
+                        </span>
+                      </div>
+                      <span className="shrink-0 text-[13px] font-medium tabular-nums">
+                        ${p.price}
+                      </span>
+                    </button>
                   </li>
                 );
               })}
@@ -159,6 +191,8 @@ export function ProtocolBuilder({
           </section>
         </>
       )}
+
+      <ProductDetailModal product={active} onClose={() => setActive(null)} />
     </aside>
   );
 }
