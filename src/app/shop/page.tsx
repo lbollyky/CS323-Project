@@ -1,6 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { PRODUCTS } from "@/lib/products";
+import { PRODUCTS, getProduct } from "@/lib/products";
 import { SiteNav } from "@/components/site-nav";
 import { SiteBackdrop } from "@/components/backdrop/site-backdrop";
 import { ShopAddToCartButton } from "@/components/shop-add-to-cart-button";
@@ -16,6 +17,11 @@ export default async function ShopPage() {
   const user = await getUser();
   const single = PRODUCTS.filter((p) => !p.bundle_of);
   const stack = PRODUCTS.find((p) => p.bundle_of);
+  const stackBottles = stack
+    ? Array.from(new Set(stack.bundle_of ?? []))
+        .map((id) => getProduct(id))
+        .filter((p): p is NonNullable<typeof p> => Boolean(p?.image_url))
+    : [];
 
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-foreground">
@@ -50,7 +56,8 @@ export default async function ShopPage() {
 
           {stack && (
             <div className="mt-12 rounded-2xl border border-border bg-surface/60 p-1">
-              <div className="rounded-[14px] bg-background p-6 sm:p-8">
+              <div className="grid gap-6 rounded-[14px] bg-background p-6 sm:p-8 lg:grid-cols-[1.5fr_1fr] lg:items-center lg:gap-10">
+                <div>
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
                   <div>
                     <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
@@ -88,6 +95,23 @@ export default async function ShopPage() {
                     Not sure? Ask the guide
                   </Link>
                 </div>
+                </div>
+
+                {stackBottles.length > 0 && (
+                  <div className="order-first flex overflow-hidden rounded-xl bg-[linear-gradient(165deg,#f6f6f7_0%,#efeff0_52%,#e7e7ea_100%)] lg:order-last">
+                    {stackBottles.map((b) => (
+                      <div key={b.id} className="relative aspect-[3/4] flex-1">
+                        <Image
+                          src={b.image_url as string}
+                          alt={`${b.name} bottle`}
+                          fill
+                          sizes="(min-width: 1024px) 200px, 45vw"
+                          className="object-cover object-center"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -96,8 +120,20 @@ export default async function ShopPage() {
             {single.map((p) => (
               <article
                 key={p.id}
-                className="flex flex-col rounded-2xl border border-border bg-background p-5"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-background"
               >
+                {p.image_url && (
+                  <div className="relative aspect-[2/3] w-full bg-[linear-gradient(165deg,#f6f6f7_0%,#efeff0_52%,#e7e7ea_100%)]">
+                    <Image
+                      src={p.image_url}
+                      alt={`${p.name} bottle`}
+                      fill
+                      sizes="(min-width: 640px) 33vw, 100vw"
+                      className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-baseline justify-between">
                   <h3 className="text-[18px] font-medium tracking-tight">
                     {p.name}
@@ -125,8 +161,9 @@ export default async function ShopPage() {
                   ))}
                 </ul>
 
-                <div className="mt-5 flex flex-col gap-1.5">
+                <div className="mt-auto flex flex-col gap-1.5 pt-5">
                   <ShopAddToCartButton product={p} />
+                </div>
                 </div>
               </article>
             ))}
