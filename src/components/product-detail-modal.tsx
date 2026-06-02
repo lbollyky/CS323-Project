@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { Play, X } from "lucide-react";
 import type { ProtocolProduct } from "@/lib/products";
 import { ShopAddToCartButton } from "@/components/shop-add-to-cart-button";
 import { cn } from "@/lib/utils";
 
 const PANEL_BG =
   "bg-[linear-gradient(165deg,#f6f6f7_0%,#efeff0_52%,#e7e7ea_100%)]";
+
+const isVideo = (src: string) => /\.(mp4|webm|mov)$/i.test(src);
 
 export function ProductDetailModal({
   product,
@@ -79,7 +81,7 @@ export function ProductDetailModal({
         className="animate-modal-overlay absolute inset-0 h-full w-full cursor-default bg-foreground/40 backdrop-blur-sm"
       />
 
-      <div className="animate-modal-panel relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl">
+      <div className="animate-modal-panel relative z-10 flex max-h-[92dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-2xl sm:flex-row sm:rounded-2xl">
         <button
           ref={closeRef}
           type="button"
@@ -90,24 +92,36 @@ export function ProductDetailModal({
           <X className="h-4 w-4" />
         </button>
 
-        <div className="overflow-y-auto overscroll-contain">
-          {heroSrc && (
-            <div>
-              <div className={`relative aspect-[4/5] w-full ${PANEL_BG}`}>
+        {heroSrc && (
+          <div className="shrink-0 border-b border-border sm:w-[44%] sm:self-start sm:border-b-0 sm:border-r">
+            <div className={`relative aspect-[4/5] w-full ${PANEL_BG}`}>
+              {isVideo(heroSrc) ? (
+                <video
+                  key={heroSrc}
+                  src={heroSrc}
+                  className="animate-modal-overlay absolute inset-0 h-full w-full object-cover object-center"
+                  controls
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              ) : (
                 <Image
                   key={heroSrc}
                   src={heroSrc}
                   alt={`${product.name}`}
                   fill
-                  sizes="(min-width: 640px) 672px, 100vw"
+                  sizes="(min-width: 640px) 440px, 100vw"
                   quality={100}
                   className="animate-modal-overlay object-cover object-center"
                 />
-              </div>
+              )}
+            </div>
 
-              {images.length > 1 && (
-                <div className="flex gap-2 px-3 pt-3">
-                  {images.map((src, i) => (
+            {images.length > 1 && (
+              <div className="flex gap-2 px-3 pb-4 pt-3">
+                {images.map((src, i) => (
                     <button
                       key={src}
                       type="button"
@@ -121,13 +135,28 @@ export function ProductDetailModal({
                           : "border-border/60 hover:border-foreground/40",
                       )}
                     >
-                      <Image
-                        src={src}
-                        alt=""
-                        fill
-                        sizes="64px"
-                        className="object-cover object-center"
-                      />
+                      {isVideo(src) ? (
+                        <>
+                          <video
+                            src={src}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            className="absolute inset-0 h-full w-full object-cover object-center"
+                          />
+                          <span className="absolute inset-0 flex items-center justify-center bg-foreground/15">
+                            <Play className="h-4 w-4 fill-background text-background" />
+                          </span>
+                        </>
+                      ) : (
+                        <Image
+                          src={src}
+                          alt=""
+                          fill
+                          sizes="64px"
+                          className="object-cover object-center"
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -135,11 +164,13 @@ export function ProductDetailModal({
             </div>
           )}
 
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="overflow-y-auto overscroll-contain">
           <div className="p-6 sm:p-8">
             <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
               {product.category}
             </p>
-            <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pr-9">
               <h2
                 id="product-modal-title"
                 className="text-[26px] font-medium tracking-tight"
@@ -211,10 +242,11 @@ export function ProductDetailModal({
               </Section>
             )}
           </div>
-        </div>
+          </div>
 
-        <div className="flex items-center gap-3 border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
-          <ShopAddToCartButton product={product} primary />
+          <div className="flex items-center gap-3 border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
+            <ShopAddToCartButton product={product} primary />
+          </div>
         </div>
       </div>
     </div>

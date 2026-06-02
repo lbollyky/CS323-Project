@@ -17,7 +17,7 @@
 do $$
 declare
   v_user_id uuid;
-  v_email   text := 'you@example.com';  -- ← CHANGE THIS
+  v_email   text := 'lbollyky@gmail.com';  -- ← CHANGE THIS
 begin
   select id into v_user_id
   from public.profiles

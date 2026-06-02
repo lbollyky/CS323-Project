@@ -13,6 +13,7 @@ import {
   type ProtocolMeta,
 } from "@/components/protocol-builder";
 import { ClinicianCard } from "@/components/clinician-card";
+import { PharmacistTeamCta } from "@/components/pharmacist-team-cta";
 import { TestimonialStrip } from "@/components/testimonial-strip";
 import { ProtocolPreview } from "@/components/protocol-preview";
 import { GoalTileBackbone } from "@/components/goal-tile-backbone";
@@ -430,8 +431,8 @@ function LandingState({
         id="more"
         className="w-full scroll-mt-20 pb-20 pt-16 sm:pt-24"
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-          <ClinicianCard />
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          <PharmacistTeamCta />
           <ProtocolPreview onUseExample={onUseExample} />
         </div>
 

@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteBackdrop } from "@/components/backdrop/site-backdrop";
 import { ClinicianCard } from "@/components/clinician-card";
+import { PharmacistTeamCta } from "@/components/pharmacist-team-cta";
 import { PRIMARY_CLINICIAN } from "@/lib/clinician";
 import { getUser } from "@/lib/auth";
 
@@ -34,6 +35,11 @@ export default async function ClinicianPage() {
             principles below. If a recommendation does not pass them, the
             guide does not make it — even when it would be easier to say yes.
           </p>
+
+          <PharmacistTeamCta
+            className="mt-10 w-full"
+            sizes="(min-width: 768px) 720px, 100vw"
+          />
 
           <div className="mt-10">
             <ClinicianCard />

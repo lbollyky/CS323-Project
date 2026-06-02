@@ -31,6 +31,7 @@ export const PRODUCTS: ProtocolProduct[] = [
     price: 149,
     image_url: "/products/epitalon-v2.png",
     gallery: [
+      "/products/epitalon-video.mp4",
       "/products/epitalon-lifestyle.png",
       "/products/epitalon-science.png",
       "/products/epitalon-pill.png",
@@ -75,6 +76,7 @@ export const PRODUCTS: ProtocolProduct[] = [
     price: 149,
     image_url: "/products/pinealon-v2.png",
     gallery: [
+      "/products/pinealon-video.mp4",
       "/products/pinealon-lifestyle.png",
       "/products/pinealon-science.png",
       "/products/pinealon-pill.png",
@@ -119,6 +121,7 @@ export const PRODUCTS: ProtocolProduct[] = [
     price: 149,
     image_url: "/products/restore-bpc-v2.png",
     gallery: [
+      "/products/restore-bpc-video.mp4",
       "/products/restore-bpc-lifestyle.png",
       "/products/restore-bpc-science.png",
       "/products/restore-bpc-pill.png",
