@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { CartBadge } from "@/components/cart-badge";
 import { SignOutForm } from "@/components/sign-out-form";
+import { Wordmark } from "@/components/wordmark";
 
 export function SiteNav({ user }: { user?: User | null }) {
   const isAuthed = Boolean(user);
@@ -9,13 +10,8 @@ export function SiteNav({ user }: { user?: User | null }) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
-        <Link
-          href="/"
-          className="flex items-baseline gap-0.5 text-[15px] font-medium tracking-tight text-foreground"
-        >
-          <span>pep</span>
-          <span className="text-muted-foreground">well</span>
-          <span className="ml-0.5 inline-block h-1 w-1 translate-y-[-2px] rounded-full bg-foreground" />
+        <Link href="/" aria-label="Pepwell home" className="flex items-center">
+          <Wordmark className="h-5" />
         </Link>
 
         <nav className="flex items-center gap-1 text-[13px]">

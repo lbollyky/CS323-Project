@@ -21,18 +21,21 @@ export function ClinicianCard({
 
   if (variant === "inline") {
     return (
-      <div
+      <Link
+        href="/clinician"
         className={cn(
-          "flex items-center gap-2 text-[12px] text-muted-foreground",
+          "group inline-flex w-fit items-center gap-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground",
           className,
         )}
       >
         <Avatar initials={c.initials} size={20} />
         <span>
           Reviewed by{" "}
-          <span className="font-medium text-foreground">{c.name}</span>
+          <span className="font-medium text-foreground underline-offset-2 group-hover:underline">
+            {c.name}
+          </span>
         </span>
-      </div>
+      </Link>
     );
   }
 

@@ -29,7 +29,7 @@ export const PRODUCTS: ProtocolProduct[] = [
       "A daily oral capsule built around the Khavinson tetrapeptide AEDG (Ala-Glu-Asp-Gly). Used to support circadian rhythm and long-range recovery.",
     type: "OTC",
     price: 149,
-    image_url: "/products/epitalon-v2.png",
+    image_url: "/products/epitalon-v3.png",
     gallery: [
       "/products/epitalon-video.mp4",
       "/products/epitalon-lifestyle.png",
@@ -74,7 +74,7 @@ export const PRODUCTS: ProtocolProduct[] = [
       "A daily oral capsule built around the Khavinson tripeptide EDR (Glu-Asp-Arg). Built for cognitive recovery under sustained load.",
     type: "OTC",
     price: 149,
-    image_url: "/products/pinealon-v2.png",
+    image_url: "/products/pinealon-v4.png",
     gallery: [
       "/products/pinealon-video.mp4",
       "/products/pinealon-lifestyle.png",
@@ -119,7 +119,7 @@ export const PRODUCTS: ProtocolProduct[] = [
       "A daily oral capsule built around BPC-157 (stable gastric pentadecapeptide). Used for tissue repair, joint support, and GI comfort.",
     type: "OTC",
     price: 149,
-    image_url: "/products/restore-bpc-v2.png",
+    image_url: "/products/restore-bpc-v3.png",
     gallery: [
       "/products/restore-bpc-video.mp4",
       "/products/restore-bpc-lifestyle.png",

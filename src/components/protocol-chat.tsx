@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowUp, ChevronDown } from "lucide-react";
 import { PRODUCTS, getProduct, type ProtocolProduct } from "@/lib/products";
 import { useCartStore } from "@/stores/cart-store";
@@ -399,10 +400,9 @@ function LandingState({
             </button>
           </form>
 
-          {/* Goal tiles, anchored to a peptide backbone — primary on-ramp. */}
+          {/* Goal cards — primary on-ramp into the guide. */}
           <div className="mt-10 w-full">
-            {/* Sub-lg fallback eyebrow; the rail carries its own at lg+. */}
-            <p className="mb-3 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground lg:hidden">
+            <p className="mb-3 text-center font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
               Jump in by goal
             </p>
             <GoalTileBackbone onSelect={onChip} />
@@ -522,7 +522,14 @@ function DockedComposer({
         </form>
 
         <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          Educational only. Not medical advice. Reviewed by Dr. Levin, MD.
+          Educational only. Not medical advice. Reviewed by{" "}
+          <Link
+            href="/clinician"
+            className="font-medium text-foreground underline-offset-2 hover:underline"
+          >
+            Dr. Levin, MD
+          </Link>
+          .
         </p>
       </div>
     </div>

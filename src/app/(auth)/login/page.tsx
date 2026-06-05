@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Wordmark } from "@/components/wordmark";
 
 export default function LoginPage() {
   return (
@@ -62,13 +63,8 @@ function LoginForm() {
       </Link>
 
       <div className="w-full max-w-sm">
-        <Link
-          href="/"
-          className="flex items-baseline gap-0.5 text-[15px] font-medium tracking-tight"
-        >
-          <span>pep</span>
-          <span className="text-muted-foreground">well</span>
-          <span className="ml-0.5 inline-block h-1 w-1 translate-y-[-2px] rounded-full bg-foreground" />
+        <Link href="/" aria-label="Pepwell home" className="inline-flex items-center">
+          <Wordmark className="h-6" />
         </Link>
 
         <h1 className="mt-10 text-[24px] font-medium tracking-tight">
