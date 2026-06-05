@@ -19,6 +19,8 @@ export interface ClinicianPrinciple {
 export interface Clinician {
   name: string;
   initials: string;
+  /** Real headshot used for the avatar. Falls back to initials if absent. */
+  avatar_url?: string;
   credentials: string;
   license: string;
   location: string;
@@ -35,6 +37,7 @@ export interface Clinician {
 export const PRIMARY_CLINICIAN: Clinician = {
   name: "Dr. Maya Levin, MD",
   initials: "ML",
+  avatar_url: "/products/maya-levin.png",
   credentials: "Board-certified Internal Medicine",
   license: "CA license A157892 · NPI 1467821093",
   location: "San Francisco, CA",

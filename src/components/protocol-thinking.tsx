@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { Check, Loader2 } from "lucide-react";
+import { PRIMARY_CLINICIAN } from "@/lib/clinician";
 import { cn } from "@/lib/utils";
 
 const STAGES = [
@@ -39,9 +41,42 @@ export function ProtocolThinking({
       ? `Customizing for: “${trimmed.length > 64 ? trimmed.slice(0, 64) + "…" : trimmed}”`
       : "Working through the evidence for your goal.";
 
+  const c = PRIMARY_CLINICIAN;
+
   return (
     <div className="rounded-2xl border border-border/70 bg-surface/40 p-4">
-      <div className="flex items-center gap-2">
+      {/* The clinician, present while she builds the protocol. */}
+      <div className="flex items-center gap-3 border-b border-border/50 pb-3.5">
+        <div className="relative shrink-0">
+          <div className="relative h-11 w-11 overflow-hidden rounded-full ring-1 ring-border">
+            {c.avatar_url ? (
+              <Image
+                src={c.avatar_url}
+                alt={c.name}
+                fill
+                sizes="44px"
+                quality={90}
+                className="object-cover object-[50%_22%]"
+              />
+            ) : null}
+          </div>
+          {!done && (
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-background ring-1 ring-border">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-medium text-foreground">
+            {c.name}
+          </p>
+          <p className="truncate text-[11.5px] text-muted-foreground">
+            {done ? "Signed off on your protocol" : "is building your protocol…"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3.5 flex items-center gap-2">
         {done ? (
           <Check className="h-3.5 w-3.5 text-emerald-600" />
         ) : (

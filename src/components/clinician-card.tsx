@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { PRIMARY_CLINICIAN } from "@/lib/clinician";
@@ -28,7 +29,7 @@ export function ClinicianCard({
           className,
         )}
       >
-        <Avatar initials={c.initials} size={20} />
+        <Avatar initials={c.initials} src={c.avatar_url} size={20} />
         <span>
           Reviewed by{" "}
           <span className="font-medium text-foreground underline-offset-2 group-hover:underline">
@@ -47,7 +48,7 @@ export function ClinicianCard({
           className,
         )}
       >
-        <Avatar initials={c.initials} size={36} />
+        <Avatar initials={c.initials} src={c.avatar_url} size={36} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-medium text-foreground">
             {c.name}
@@ -68,7 +69,7 @@ export function ClinicianCard({
       )}
     >
       <div className="flex items-start gap-4">
-        <Avatar initials={c.initials} size={56} />
+        <Avatar initials={c.initials} src={c.avatar_url} size={56} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-3">
             <div className="min-w-0">
@@ -99,24 +100,45 @@ export function ClinicianCard({
   );
 }
 
-function Avatar({ initials, size }: { initials: string; size: number }) {
+function Avatar({
+  initials,
+  src,
+  size,
+}: {
+  initials: string;
+  src?: string;
+  size: number;
+}) {
   return (
     <div
       aria-hidden
       style={{ width: size, height: size }}
       className="relative shrink-0 overflow-hidden rounded-full ring-1 ring-border"
     >
-      {/* Gradient ground that reads as a real portrait at thumbnail size. */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(120% 90% at 30% 25%, oklch(0.94 0.04 250), oklch(0.62 0.14 260) 65%, oklch(0.30 0.08 260) 110%)",
-        }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center font-medium tracking-tight text-white">
-        <span style={{ fontSize: size * 0.42 }}>{initials}</span>
-      </div>
+      {src ? (
+        <Image
+          src={src}
+          alt=""
+          fill
+          sizes={`${size}px`}
+          quality={90}
+          className="object-cover object-[50%_22%]"
+        />
+      ) : (
+        <>
+          {/* Gradient ground that reads as a real portrait at thumbnail size. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(120% 90% at 30% 25%, oklch(0.94 0.04 250), oklch(0.62 0.14 260) 65%, oklch(0.30 0.08 260) 110%)",
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center font-medium tracking-tight text-white">
+            <span style={{ fontSize: size * 0.42 }}>{initials}</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
