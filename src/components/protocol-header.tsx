@@ -50,9 +50,17 @@ export function ProtocolHeader({
     );
   }
 
+  const headerPalette = getPalette(categoryForProduct(products[0].id));
+
   return (
-    <div className="rounded-2xl border border-border bg-background p-1 shadow-sm">
-      <div className="rounded-[14px] bg-gradient-to-br from-background to-surface/80 p-5 sm:p-6">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-background p-1 shadow-elevated">
+      {/* Soft category-tinted glow in the corner for depth. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-70 blur-3xl"
+        style={{ background: headerPalette.soft }}
+      />
+      <div className="relative rounded-[14px] bg-gradient-to-br from-background to-surface/80 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">

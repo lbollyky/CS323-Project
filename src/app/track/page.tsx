@@ -74,10 +74,35 @@ export default async function TrackPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SiteNav user={user} />
-      <main className="flex-1">
-        <div className="mx-auto max-w-6xl px-5 pb-20 pt-12 sm:pt-16">
+      <main className="relative flex-1">
+        {/* Ambient color wash so the dashboard reads as part of an
+            intentional palette rather than a flat white sheet. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[560px] overflow-hidden"
+        >
+          <div
+            className="absolute -left-32 -top-24 h-80 w-80 rounded-full blur-[90px]"
+            style={{ background: "oklch(0.62 0.18 280 / 0.16)" }}
+          />
+          <div
+            className="absolute left-1/3 -top-16 h-72 w-72 rounded-full blur-[90px]"
+            style={{ background: "oklch(0.66 0.16 40 / 0.12)" }}
+          />
+          <div
+            className="absolute right-0 top-8 h-80 w-80 rounded-full blur-[90px]"
+            style={{ background: "oklch(0.6 0.15 215 / 0.15)" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-5 pb-20 pt-12 sm:pt-16">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: "oklch(0.55 0.22 260)" }}
+              />
               Your dashboard
             </p>
             <ContactProviderButton />
@@ -126,7 +151,11 @@ export default async function TrackPage() {
 
             {/* History */}
             <div>
-              <TrackHistory logs={recent} protocols={protocols} />
+              <TrackHistory
+                logs={recent}
+                todayLog={todayLog}
+                protocols={protocols}
+              />
             </div>
           </div>
         </div>

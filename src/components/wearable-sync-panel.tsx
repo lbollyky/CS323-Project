@@ -153,7 +153,7 @@ export function WearableSyncPanel({
   const anyConnected = connections.length > 0;
 
   return (
-    <div className="rounded-2xl border border-border bg-background p-1">
+    <div className="rounded-2xl border border-border bg-gradient-to-br from-background to-surface/60 p-1 shadow-elevated">
       <div className="rounded-[14px] p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -214,7 +214,16 @@ export function WearableSyncPanel({
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <Icon className="h-5 w-5 text-muted-foreground" />
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-lg ring-1",
+                      isConnected
+                        ? "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20"
+                        : "bg-primary/10 text-primary ring-primary/15",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
                   {isConnected && (
                     <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-700">
                       Linked

@@ -12,11 +12,13 @@ const SCORE_FIELDS: Array<{
     "sleep_score" | "energy_score" | "focus_score" | "mood_score"
   >;
   label: string;
+  color: string;
+  tint: string;
 }> = [
-  { field: "sleep_score", label: "Sleep" },
-  { field: "energy_score", label: "Energy" },
-  { field: "focus_score", label: "Focus" },
-  { field: "mood_score", label: "Mood" },
+  { field: "sleep_score", label: "Sleep", color: "oklch(0.55 0.18 280)", tint: "oklch(0.55 0.18 280 / 0.09)" },
+  { field: "energy_score", label: "Energy", color: "oklch(0.62 0.17 40)", tint: "oklch(0.62 0.17 40 / 0.10)" },
+  { field: "focus_score", label: "Focus", color: "oklch(0.55 0.15 215)", tint: "oklch(0.55 0.15 215 / 0.10)" },
+  { field: "mood_score", label: "Mood", color: "oklch(0.52 0.13 158)", tint: "oklch(0.52 0.13 158 / 0.10)" },
 ];
 
 function avg(values: Array<number | null | undefined>): number | null {
@@ -38,12 +40,23 @@ function fmtDate(iso: string): string {
 
 export function TrackHistory({
   logs,
+  todayLog,
   protocols,
 }: {
   logs: DailyLog[];
+  todayLog?: DailyLog | null;
   protocols: Protocol[];
 }) {
-  if (logs.length === 0) {
+  // The trend, averages, and counts should reflect everything through
+  // today; the day-by-day list stays "past days" since today lives in the
+  // check-in form on the left. `logs` arrives newest-first, so today (if
+  // present) prepends to keep that order.
+  const stats =
+    todayLog && !logs.some((l) => l.log_date === todayLog.log_date)
+      ? [todayLog, ...logs]
+      : logs;
+
+  if (stats.length === 0) {
     return (
       <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -64,12 +77,14 @@ export function TrackHistory({
 
   const averages = SCORE_FIELDS.map((s) => ({
     label: s.label,
-    avg: avg(logs.map((l) => l[s.field])),
+    color: s.color,
+    tint: s.tint,
+    avg: avg(stats.map((l) => l[s.field])),
   }));
 
   const protocolCounts = protocols.map((p) => ({
     name: p.name,
-    days: logs.filter((l) => l.protocols_taken?.includes(p.id)).length,
+    days: stats.filter((l) => l.protocols_taken?.includes(p.id)).length,
   }));
 
   return (
@@ -81,13 +96,13 @@ export function TrackHistory({
         Trend at a glance
       </h2>
       <p className="mt-2 text-[13.5px] text-muted-foreground">
-        {logs.length} {logs.length === 1 ? "entry" : "entries"} logged in the
+        {stats.length} {stats.length === 1 ? "entry" : "entries"} logged in the
         last two weeks.
       </p>
 
       {/* Trend chart */}
       <div className="mt-5">
-        <TrackTrendChart logs={logs} />
+        <TrackTrendChart logs={stats} />
       </div>
 
       {/* Averages strip */}
@@ -95,13 +110,25 @@ export function TrackHistory({
         {averages.map((a) => (
           <div
             key={a.label}
-            className="rounded-xl border border-border bg-background p-4"
+            className="relative overflow-hidden rounded-xl border border-border/70 p-4"
+            style={{ background: a.tint }}
           >
-            <p className="text-[11.5px] uppercase tracking-wider text-muted-foreground">
+            <span
+              aria-hidden
+              className="absolute inset-y-0 left-0 w-1"
+              style={{ background: a.color }}
+            />
+            <p className="flex items-center gap-1.5 text-[11.5px] uppercase tracking-wider text-muted-foreground">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: a.color }}
+              />
               {a.label} avg
             </p>
             <p className="mt-1 text-[22px] font-medium tabular-nums">
-              {a.avg != null ? a.avg.toFixed(1) : "—"}
+              <span style={{ color: a.color }}>
+                {a.avg != null ? a.avg.toFixed(1) : "—"}
+              </span>
               <span className="ml-0.5 text-[12px] text-muted-foreground/60">
                 /10
               </span>
@@ -115,17 +142,20 @@ export function TrackHistory({
         {protocolCounts.map((p) => (
           <div
             key={p.name}
-            className="inline-flex items-baseline gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[12.5px]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[12.5px]"
           >
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             <span className="text-foreground">{p.name}</span>
             <span className="tabular-nums text-muted-foreground">
-              {p.days}/{logs.length}d
+              {p.days}/{stats.length}d
             </span>
           </div>
         ))}
       </div>
 
-      {/* Day-by-day list (collapsed by default, click to expand) */}
+      {/* Day-by-day list (collapsed by default, click to expand). Shows
+          past days only — today lives in the check-in form. */}
+      {logs.length > 0 && (
       <details className="group mt-7 rounded-2xl border border-border bg-background">
         <summary className="focus-ring flex cursor-pointer select-none list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 [&::-webkit-details-marker]:hidden">
           <span className="text-[13.5px] font-medium">Day-by-day log</span>
@@ -208,6 +238,7 @@ export function TrackHistory({
         ))}
         </ul>
       </details>
+      )}
     </div>
   );
 }
