@@ -21,6 +21,12 @@ export function SiteNav({ user }: { user?: User | null }) {
           >
             Shop
           </Link>
+          <Link
+            href="/verify"
+            className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Verify
+          </Link>
 
           {isAuthed ? (
             <>
